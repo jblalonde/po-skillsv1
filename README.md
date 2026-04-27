@@ -315,7 +315,6 @@ Les changements au plugin passent par une PR :
 
 ## Crédits & ressources
 
-- Construit pour Claude Code en suivant la [doc skills](https://code.claude.com/docs/en/skills) et la [doc plugins](https://code.claude.com/docs/en/plugins).
 - Hiérarchie Atlassian (theme / initiative / epic / story / task) basée sur [atlassian.com/agile/project-management/epics-stories-themes](https://www.atlassian.com/agile/project-management/epics-stories-themes).
 - Critères INVEST classiques d'agile.
 - Format Given-When-Then (Étant donné / Quand / Alors) standard BDD.
