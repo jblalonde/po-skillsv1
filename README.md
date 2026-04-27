@@ -1,129 +1,331 @@
-# po — Claude Code plugin for Product Owners
+# po — Plugin Claude Code pour Product Owners
 
-A Claude Code plugin that bundles **two skills** for Product Owners:
+Un plugin Claude Code qui regroupe **deux skills** au service des Product Owners :
 
-- **`/po:jira-ticket`** — drafts high-quality Jira tickets (epics, user stories / new features, adjustments) with qualified personas, testable acceptance criteria, verbatim UI copy, and complete metadata. Pulls context from connected Jira, Notion, Confluence, Figma, and other MCP sources rather than assuming anything. Ends in `Atlassian:createJiraIssue` on explicit approval.
-- **`/po:check`** — audits an existing Jira ticket against the same quality contract. Reads the ticket via `Atlassian:getJiraIssue`, runs the structural and INVEST/Validation epic checks, returns a pass/fail report with concrete fixes, and optionally applies them via `Atlassian:editJiraIssue` (with explicit per-fix approval).
+- **`/po:jira-ticket`** — rédige des tickets Jira de qualité (epics, user stories / nouvelles features, ajustements) avec des personas qualifiés, des critères d'acceptation testables, des copies UI verbatim, et toutes les métadonnées requises. Tire son contexte des sources MCP connectées (Jira, Notion, Confluence, Figma) plutôt que de présumer quoi que ce soit. Crée le ticket dans Jira sur approbation explicite.
+- **`/po:check`** — audite un ticket Jira existant contre le même contrat de qualité. Lit le ticket via `Atlassian:getJiraIssue`, exécute les vérifications structurelles + INVEST (story) ou Validation epic (epic), retourne un rapport pass/fail avec corrections concrètes, et peut appliquer les fixes via `Atlassian:editJiraIssue` (avec approbation par fix).
 
-Project- and domain-agnostic. No defaults baked in — every project gets its own metadata lookup before drafting.
+**Le plugin est project- et domain-agnostic** — aucun paramètre par défaut codé en dur. Chaque projet Jira reçoit son propre scan de métadonnées avant que le skill ne rédige.
 
-## What the plugin enforces (the contract)
+---
 
-- **Anti-fabrication (hard stop)** — no invented backend specifics (field/event/service/queue/flag/copy). Missing info becomes a TODO with the exact question to ask, naming who can answer.
-- **Two-block output** — Block A = the ticket paste-ready in Jira. Block B = open questions, workspace-only.
-- **Qualified personas** — role + segment/state + context of need. No "as a user".
-- **Testable acceptance criteria** — every behavioural AC in Given-When-Then. No vague verbs.
-- **Verbatim UI copy** — every button label, modal title, error message, notification text quoted from a cited source (Figma, Notion, PO message, code).
-- **Vertical slicing** — every ticket ships user-visible value, not a technical layer.
-- **Explicit approval gate** — never creates or modifies a ticket without the requester saying so.
+## Le contrat enforced par le plugin
 
-## Plugin structure
+Tout ticket produit ou audité par ce plugin doit satisfaire ces règles :
+
+| Règle | Description |
+|---|---|
+| **Anti-fabrication (hard stop)** | Aucun nom de champ, table, événement, service, queue, flag, ou copie UI inventé. Information manquante = `[TODO]` avec la question précise à poser et qui peut y répondre. |
+| **Sortie en deux blocs** | Bloc A = le ticket prêt à coller dans Jira. Bloc B = les questions ouvertes, jamais collées dans Jira (workspace seulement). |
+| **Persona qualifié** | Rôle + segment/état + contexte du besoin. Pas de *« en tant qu'utilisateur »*. |
+| **Critères d'acceptation testables** | Tout AC comportemental en *Étant donné / Quand / Alors* (Given-When-Then). Pas de verbes vagues (*« fluide »*, *« intuitif »*, *« bien fonctionner »*). |
+| **Copie UI verbatim** | Chaque libellé de bouton, titre de modal, message d'erreur, copie de notification est cité depuis une source réelle (Figma, Notion, message PO, code). |
+| **Tranchage vertical** | Chaque ticket livre une valeur visible utilisateur, pas une couche technique. Pas de *« Backend pour Y »*. |
+| **Gate d'approbation explicite** | Aucune création ni modification de ticket sans l'accord explicite du requester. |
+
+---
+
+## Le flow complet du skill
+
+```mermaid
+flowchart TD
+    Start([Le PO dit :<br/>« j'ai besoin d'un ticket »]) --> Q1[1 — Le skill pose 5 questions :<br/>• De quoi parle le travail ?<br/>• Gros ou petit epic vs story ?<br/>• Nouvelle chose ou modification ?<br/>• Quel projet Jira ?<br/>• Quelle langue ?]
+
+    Q1 --> Sized{Plusieurs sprints ?<br/>Plusieurs flows ?}
+    Sized -->|Oui| Tpl1[Template Epic]
+    Sized -->|Non, tient<br/>en un sprint| Type{Nouveau ou<br/>modification ?}
+    Type -->|Nouvelle chose| Tpl2[Template Story —<br/>nouvelle feature]
+    Type -->|Modification| Tpl3[Template Story —<br/>ajustement]
+
+    Tpl1 --> Scan[2 — Le skill scanne le projet via Jira :<br/>epics récents, labels utilisés,<br/>style des derniers tickets]
+    Tpl2 --> Scan
+    Tpl3 --> Scan
+
+    Scan --> Sources[3 — Le skill demande les sources écrites :<br/>PRD Notion, notes de réunion, Figma,<br/>tickets liés, transcripts]
+    Sources --> Fetch[Le skill lit chaque source<br/>et résume en 3-5 points<br/>pour confirmer sa lecture]
+    Fetch --> Draft[4 — Le skill rédige le ticket<br/>en utilisant SEULEMENT<br/>les informations confirmées]
+
+    Draft -.->|Règle absolue| Anti[INTERDIT D'INVENTER<br/>noms de champs, services, copies UI,<br/>chiffres, seuils.<br/>Information manquante = TODO<br/>avec la question précise à poser]
+
+    Draft --> Quality[5 — Vérification qualité, silencieuse :<br/>• Persona qualifié rôle + segment + contexte<br/>• Chaque critère est testable<br/>• Copie UI citée verbatim depuis une source<br/>• Le ticket livre une valeur visible utilisateur<br/>• Les 6 critères INVEST passent]
+
+    Quality --> Output[6 — Sortie en DEUX blocs séparés]
+    Output --> A[BLOC A — Le ticket<br/>prêt à coller dans Jira tel quel]
+    Output --> B[BLOC B — Questions ouvertes<br/>jamais collées dans Jira,<br/>regroupées par destinataire :<br/>PO / Design / Ingénieur]
+
+    A --> Approve{Approbation<br/>explicite du PO ?}
+    B --> Approve
+
+    Approve -->|Le PO répond aux questions<br/>ou demande des ajustements| Draft
+    Approve -->|« crée tel quel »| Create[7 — Le skill crée le ticket<br/>dans Jira via le MCP Atlassian]
+
+    Create --> End([Ticket créé<br/>clé Jira + URL retournées au PO])
+
+    style Q1 fill:#e6f3ff
+    style Scan fill:#e6f3ff
+    style Sources fill:#e6f3ff
+    style Fetch fill:#e6f3ff
+    style Draft fill:#fff4e6
+    style Anti fill:#ffcccc,stroke:#c00,stroke-width:2px
+    style Quality fill:#ffe6e6
+    style A fill:#e6ffe6
+    style B fill:#fff4e6
+    style Approve fill:#fff4cc,stroke:#d4a000,stroke-width:2px
+    style Create fill:#e6ffe6
+    style End fill:#d4f4d4
+```
+
+### Légende des couleurs
+
+- 🔵 **Bleu** — phase de cadrage / contexte (le skill pose des questions, scanne le projet, lit les sources).
+- 🟡 **Beige** — phase de rédaction.
+- 🔴 **Rouge** (callout en pointillé) — la règle anti-fabrication. La seule règle qui ne se contourne pas.
+- 🌸 **Rose pâle** — la vérification qualité, qui tourne en silence avant la livraison.
+- 🟢 **Vert** — ce qui est livré (Bloc A) ou créé dans Jira.
+- 🟨 **Jaune** — la gate d'approbation. Tant que le PO ne dit pas *« crée tel quel »*, rien n'est créé dans Jira.
+
+---
+
+## Structure du plugin
 
 ```
 po/
 ├── .claude-plugin/
-│   └── plugin.json                                 # plugin manifest (name: po)
+│   └── plugin.json                       # manifest du plugin (name: po)
 ├── skills/
-│   ├── jira-ticket/                                # /po:jira-ticket
-│   │   ├── SKILL.md                                # entrypoint
+│   ├── jira-ticket/                      # /po:jira-ticket
+│   │   ├── SKILL.md                      # entrypoint du skill
 │   │   ├── templates/
-│   │   │   ├── epic.md                             # 8 Block A sections
-│   │   │   ├── new-feature.md                      # 6 Block A sections
-│   │   │   └── adjustment.md                       # 6 Block A sections
+│   │   │   ├── epic.md                   # 8 sections de Bloc A
+│   │   │   ├── new-feature.md            # 6 sections de Bloc A
+│   │   │   └── adjustment.md             # 6 sections de Bloc A
 │   │   ├── examples/
-│   │   │   ├── epic-example.md                     # neutral domain
-│   │   │   ├── new-feature-example.md              # neutral domain
-│   │   │   └── adjustment-example.md               # neutral domain
+│   │   │   ├── epic-example.md           # exemple annoté, domaine neutre
+│   │   │   ├── new-feature-example.md
+│   │   │   └── adjustment-example.md
 │   │   └── references/
-│   │       ├── quality.md                          # Section 1: 16-rule rubric. Section 2: INVEST checklist.
-│   │       └── mcp-handling.md                     # Section 1: MCP calls. Section 2: security for fetched content.
-│   └── check/                                      # /po:check
-│       └── SKILL.md                                # epic + story checklists, audit report format
-├── evals/                                          # test artifacts (not part of the runtime plugin)
+│   │       ├── quality.md                # Section 1 : 16 règles. Section 2 : INVEST.
+│   │       └── mcp-handling.md           # Section 1 : appels MCP. Section 2 : sécurité.
+│   └── check/                            # /po:check
+│       └── SKILL.md                      # 11 checks pour epic, 10 pour story
+├── evals/                                # tests (hors runtime du plugin)
 │   ├── README.md
-│   ├── evals.json                                  # 13 test cases
-│   └── rubric.md                                   # human pass/fail criteria
-└── README.md                                       # this file
+│   ├── evals.json                        # 13 cas de test
+│   └── rubric.md                         # critères pass/fail humains
+└── README.md                             # ce fichier
 ```
 
-## How to install
+---
 
-### As a plugin (recommended for sharing)
+## Installation
 
-The plugin can be loaded directly for development or installed via a marketplace.
+### Pré-requis
 
-**Local development / testing:**
+- **Atlassian MCP** — requis pour scanner le projet (Étape 2 de `/po:jira-ticket`), créer les tickets (Étape 8), lire les tickets pour audit (`/po:check`), et appliquer les fixes (`/po:check` apply-fix).
+- **Notion MCP** *(optionnel mais recommandé)* — pour les PRD et notes de réunion référencés en source de vérité.
+- **Confluence MCP** *(optionnel)* — même idée, pour les specs produit.
+- **Figma** — les liens sont préservés dans le ticket ; pas de fetch (le contenu Figma n'est pas extrait).
+
+### Test local
+
+Charge le plugin sans installation pour développement :
 
 ```bash
-claude --plugin-dir /path/to/po
+claude --plugin-dir /chemin/vers/po
 ```
 
-This loads the plugin without installing. Skills become invocable as `/po:jira-ticket` and `/po:check`. Run `/reload-plugins` to pick up edits.
+Les skills deviennent invocables comme `/po:jira-ticket` et `/po:check`. `/reload-plugins` recharge après chaque édition.
 
-**Marketplace install (for team-wide rollout):**
+### Installation pour l'équipe
 
-1. Add the plugin to a marketplace (your team's, or the official Anthropic marketplace).
-2. Team members install via `/plugin install po@your-marketplace`.
-3. Versioned via `version` field in `plugin.json`.
+1. Publie le plugin dans une marketplace (la tienne ou la marketplace officielle Anthropic).
+2. Les membres de l'équipe installent via `/plugin install po@ta-marketplace`.
+3. Versionné via le champ `version` dans `plugin.json`.
 
-See [Claude plugin docs](https://code.claude.com/docs/en/plugins) and [marketplace docs](https://code.claude.com/docs/en/plugin-marketplaces) for details.
+Voir la [doc plugins Claude](https://code.claude.com/docs/en/plugins) et la [doc marketplaces](https://code.claude.com/docs/en/plugin-marketplaces).
 
-### Prerequisites for full functionality
+---
 
-- **Atlassian MCP** — required for fetching project context (Step 2 of `/po:jira-ticket`), creating tickets (Step 8), reading tickets for audit (`/po:check`), and editing tickets (`/po:check` apply-fix). Configure via `mcp__claude_ai_Atlassian__*` tools.
-- **Notion MCP** *(optional but recommended)* — for fetching PRDs and meeting notes referenced as sources of truth.
-- **Confluence MCP** *(optional)* — same idea, for product specs.
-- **Figma** — links are kept in the ticket; no MCP fetch (Figma content is not extracted by Claude).
+## Comment l'utiliser — exemples concrets
 
-## How to use
+### Exemple 1 — Rédiger un epic
 
-### Drafting a new ticket
+**Invocation :**
 
-Open a new conversation and either type the slash command or describe the work in natural language:
+```
+/po:jira-ticket
 
-- *"Create a Jira ticket for a new modal that lets admins invite team members."*
-- *"`/po:jira-ticket` I need an epic for our self-service team management initiative."*
-- *"Here's the Notion PRD [link] — turn it into a Jira ticket."*
+J'ai besoin d'un epic pour notre nouvelle initiative de gestion d'équipe self-service.
+Les admins d'équipe doivent pouvoir inviter, modifier les rôles, et retirer des
+membres sans passer par le support. Couvre 2-3 sprints.
+```
 
-The skill walks you through five Step 1 questions (subject, sizing, type, project, language), pulls project context from Jira (Step 2), asks for written sources (Step 3), drafts the ticket (Step 4), runs silent quality gates (Step 6), and presents Block A + Block B (Step 7). On explicit approval, calls `Atlassian:createJiraIssue` (Step 8).
+**Le skill répond avec** : 5 questions de cadrage (subject confirmé, sizing, type, projet, langue), puis sur la deuxième réponse → scan du projet PROJ via Jira → demande les sources (PRD, Figma) → rédige l'epic en Bloc A + Bloc B.
 
-### Auditing an existing ticket
+**Bloc A (extrait) :**
 
-Pass a Jira key or paste a ticket draft:
+```markdown
+## Summary
+Self-service team management — invitations, rôles, retraits
 
-- *"`/po:check` PROJ-1234"*
-- *"Is this ticket ready for sprint? [pasted draft]"*
-- *"Run a quality check on the epic I just filed."*
+## Objectif
+Permettre à un admin d'équipe d'inviter, modifier le rôle, et retirer un
+membre de son organisation sans ouvrir de ticket support, en moins de 2
+minutes par opération.
 
-The skill fetches the ticket, identifies the type (epic vs story), runs the structural + quality checklists, and returns a Block A audit report (passes / flags / hard fails, each with a suggested fix) plus a Block B of open questions for the PO / Design / Engineer.
+## Contexte
+État du monde. Aujourd'hui, l'ajout, la modification de rôle, et le retrait
+d'un membre passent par un ticket support traité manuellement (délai moyen
+1-3 jours ouvrables). Le modèle d'organisation et l'enum de rôles existent
+déjà côté backend (PROJ-1100), mais aucune interface admin ne les expose.
 
-Optionally, the skill can apply specific fixes via `Atlassian:editJiraIssue` — one approval per fix, never a blanket "fix everything".
+Pourquoi maintenant. L'initiative « Reduce time-to-value for new customers »
+identifie le délai d'intégration des membres comme un des trois principaux
+freins à l'activation d'un nouveau client B2B...
 
-## Testing the plugin
+## Acceptance criteria
+- Un admin peut inviter un nouveau membre par courriel et lui assigner un rôle.
+- Un admin peut modifier le rôle d'un membre existant à tout moment.
+- Un admin peut retirer un membre, et celui-ci perd ses accès dans les 60s.
+- L'historique des changements est consultable sur les 12 derniers mois.
 
-Before rolling changes out:
+## Non-inclus
+- Single Sign-On (SSO) — couvert par une autre initiative, hors-scope.
+- Gestion des invitations en bulk depuis CSV — reportée (PROJ-1300).
+- Personnalisation par l'admin de la copie du courriel d'invitation (PROJ-1305).
+- Modification du modèle de rôles existant — la version actuelle reste en place.
 
-1. Run the eval set (`evals/evals.json`) — 13 cases covering happy paths (epic, new feature, adjustment), edge cases (ambiguous type, missing Figma, language handling, vague AC), and security concerns (injection in fetched sources).
-2. Check each case against the rubric in `evals/rubric.md`.
-3. Aim for at least 11/13 passing and no universal-rubric failures.
+## Stories enfants
+- [ ] Modal Inviter un membre — Sprint 1
+- [ ] Liste des membres avec rôle — Sprint 1
+- [ ] Modifier le rôle d'un membre — Sprint 2
+- [ ] Retirer un membre — Sprint 2
+- [ ] Historique des changements — Sprint 3
 
-See `evals/README.md` for the full testing process.
+## Details
+- Project: PROJ
+- Issue type: Epic
+- Parent: Initiative « Reduce time-to-value for new customers »
+- Labels: Team, Self-service
+- Priority: High
+- Time-window estimate: Q3 (≈ 8-10 sprints)
+```
 
-## Contributing
+**Bloc B (extrait) :**
 
-Changes to the plugin go through a PR:
+```
+Pour la PO
+- Q1 (débloque AC bullet 4 — historique 12 mois) Pourquoi 12 mois ? Y a-t-il
+  une exigence légale (RGPD, audit) ou une décision produit ?
+- Q2 (débloque Non-inclus — notifications membres) Un membre dont le rôle
+  change reçoit-il une notification courriel automatique ? Si oui, c'est
+  une 6e child story.
 
-1. Branch off `main`.
-2. Edit `skills/<skill>/SKILL.md`, templates, references, or examples as needed.
-3. Re-run the eval set and paste results in the PR description.
-4. Bump `version` in `.claude-plugin/plugin.json` if you want users to receive an update.
-5. Require one review from another PO before merging.
-6. After merge, post a one-line summary in the team channel.
+Pour l'équipe support / opérations
+- Q3 (débloque Objectif — métrique de succès) Quelle réduction de tickets
+  support attendez-vous ?
 
-## Open questions / roadmap
+Validation epic — flags surfacés
+- Pourquoi maintenant ?  ✅
+- Découpage              ⚠️  Voir Q2
+- Edges du périmètre     ✅
+- Mesurabilité           ⚠️  Voir Q3
+```
 
-- Reproducibility harness — a structural-fingerprint + N-run + judge protocol to verify each skill produces consistent output across runs of the same prompt. Sketched in `evals/` but not yet built.
-- Auto-linking: should `/po:jira-ticket` automatically create issue links (`Blocks`, `Blocked by`, `Clones`) based on related-ticket context?
-- Bulk mode: turning N PRD sections into N tickets in one pass.
-- Suggested story points from past ticket data in the same project.
-- Additional shortcuts: `/po:from-prd <url>`, `/po:epic` — only added if usage shows clear repeating patterns.
+Sur réponse aux questions → Bloc B se vide → approbation explicite → `Atlassian:createJiraIssue` → clé + URL retournées.
+
+### Exemple 2 — Auditer un ticket existant
+
+**Invocation :**
+
+```
+/po:check PROJ-2368
+```
+
+**Le skill répond avec** : fetch du ticket via Jira → identification du type (Epic) → exécution des 11 checks → rapport en Bloc A + Bloc B.
+
+**Bloc A (extrait du rapport d'audit) :**
+
+```markdown
+## Audit — PROJ-2368 — Système de paies
+
+Type detected: Epic
+Overall status: Needs work ⚠️
+
+### Passes
+- ✅ A1 Summary — noun phrase action-neutre.
+- ✅ A2 Objectif — outcome observable nommé.
+- ✅ A3 Contexte — état du monde + segments affectés présents.
+- ✅ A5 Design général linked — lien Figma fourni.
+- ✅ A7 Stories enfants linked — 5 children, vertical slices.
+
+### Flags
+- ⚠️ A4 Acceptance criteria — section sparse ; le Contexte fait figure d'AC.
+  Suggested fix: extraire 3-6 bullets observables et mesurables depuis le
+  Contexte vers la section AC dédiée.
+- ⚠️ A6 Non-inclus — section absente. C'est le gap le plus commun sur les
+  epics réels. Suggested fix: lister explicitement les capacités adjacentes
+  hors-scope (ex. legacy flow X reste tel quel, intégration SSO différée).
+- ⚠️ A11 Validation epic — Mesurabilité non vérifiable sans cible chiffrée.
+  Suggested fix: ajouter une métrique cible dans Objectif ou AC.
+
+### Hard fails
+(aucun)
+```
+
+**Bloc B :**
+
+```
+Pour la PO
+- Q1 (débloque A6 Non-inclus) Quelles capacités adjacentes voulez-vous
+  exclure explicitement ? Les engineers risquent d'over-interpréter sans
+  cette liste.
+- Q2 (débloque A11 Mesurabilité) Quelle est la cible chiffrée de succès
+  pour cet epic ?
+```
+
+Le rapport est paste-ready comme commentaire Jira. Optionnellement, le PO peut demander au skill d'appliquer les fixes — un par un, avec approbation explicite par fix, via `Atlassian:editJiraIssue`.
+
+---
+
+## Tester le plugin
+
+Avant de déployer un changement à l'équipe :
+
+1. Exécute la suite d'evals (`evals/evals.json`) — 13 cas couvrant les happy paths (epic, new feature, adjustment), les edge cases (type ambigu, Figma manquant, gestion de la langue, AC vague), et les concerns sécurité (injection dans les sources fetched).
+2. Vérifie chaque cas contre le rubric (`evals/rubric.md`).
+3. Vise au moins 11/13 cases qui passent et zéro échec sur le rubric universel.
+
+Voir `evals/README.md` pour le processus complet.
+
+---
+
+## Contribuer
+
+Les changements au plugin passent par une PR :
+
+1. Branche depuis `main`.
+2. Édite `skills/<skill>/SKILL.md`, les templates, les references, ou les examples.
+3. Re-roule les evals et colle les résultats dans la description de la PR.
+4. Bump le `version` dans `.claude-plugin/plugin.json` si tu veux que les utilisateurs reçoivent une mise à jour.
+5. Une review d'un autre PO requise avant merge.
+6. Après merge, post un résumé une-ligne dans le canal d'équipe.
+
+---
+
+## Roadmap
+
+- **Harness de reproductibilité** — un protocole structural-fingerprint + N runs + judge pour vérifier que chaque skill produit une sortie cohérente sur le même prompt. Esquissé dans `evals/`, pas encore construit.
+- **Auto-linking** — `/po:jira-ticket` pourrait créer automatiquement les liens (`Blocks`, `Blocked by`, `Clones`) basés sur le contexte des tickets liés. Actuellement non.
+- **Mode bulk** — transformer N sections d'un PRD en N tickets en une passe. Pas encore supporté.
+- **Suggestion de story points** depuis les données historiques du projet. Actuellement, le skill demande toujours.
+- **Shortcuts additionnels** — `/po:from-prd <url>`, `/po:epic` — ajoutés seulement si l'usage montre des séquences répétitives claires.
+
+---
+
+## Crédits & ressources
+
+- Construit pour Claude Code en suivant la [doc skills](https://code.claude.com/docs/en/skills) et la [doc plugins](https://code.claude.com/docs/en/plugins).
+- Hiérarchie Atlassian (theme / initiative / epic / story / task) basée sur [atlassian.com/agile/project-management/epics-stories-themes](https://www.atlassian.com/agile/project-management/epics-stories-themes).
+- Critères INVEST classiques d'agile.
+- Format Given-When-Then (Étant donné / Quand / Alors) standard BDD.
