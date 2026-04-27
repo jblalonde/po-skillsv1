@@ -306,6 +306,39 @@ When drafting reaches a section that requires architectural specifics not provid
 
 This protocol is part of Step 5 (Interview for gaps) and Step 4 (Drafting). The skill does not get to "fill in" architecture from imagination, even via TODOs.
 
+## Rule 15 — The pasted ticket must be clean
+
+Open questions are not part of the ticket. They live in a separate workspace block (see Step 7 of `SKILL.md`). The ticket as it appears in Jira must be readable as a finished artifact, not a half-filled form.
+
+**The Block A (paste-ready) version must:**
+
+- Contain no `[TODO …]` blocks longer than a short placeholder (`[copie à venir — voir Q3]`) that points to a numbered question in Block B.
+- **Omit entirely** any section for which no content has been confirmed. A section that is 100% TODO (e.g., Effets de bord système with no input from PO or engineer) does not belong in the paste-ready version — it migrates to Block B as a question.
+- Keep verbatim citations like *(verbatim PO)* — they are evidence, not commentary, and add value to the engineer reading the ticket.
+- Render the Validation INVEST table, if kept, with the failing criteria's "Note" cells pointing to question numbers in Block B (e.g., "voir Q5, Q12") rather than restating the failure inline.
+
+**Block B (workspace) carries:**
+
+- The numbered open questions, grouped by addressee.
+- The full reasoning behind any flagged INVEST failure, if needed.
+- Any pre-creation decisions that need explicit PO sign-off (e.g., "absence de plafond sur le montant personnalisé — confirmer ou ajouter un plafond ?").
+
+A reviewer reading only Block A in Jira should see a clean, scoped, coherent ticket. They should not see the drafting process. The drafting process belongs in the conversation, not in the ticket body.
+
+## Rule 16 — Cards, Conversations, Confirmations (Atlassian's 3 C's)
+
+Atlassian's *« 3 C's »* of a user story (see `references/atlassian-hierarchy.md`) are a meta-check that the ticket is *workable*, not just well-formatted.
+
+A drafted **story** must satisfy all three Cs:
+
+- **Card** — Summary, Contexte, and the description body are present and clear. The reader knows *what* is being built and *why* without scrolling outside the ticket.
+- **Conversation** — Bloc B (workspace) lists the open questions to be answered before sprint commitment. If a brand-new ticket has zero open questions, that's suspicious — re-check whether something was silently assumed (Rule 14).
+- **Confirmation** — the AC section contains testable scenarios in GWT (Rule 12). A QA reviewer can write test cases without follow-up questions, *or* the open questions in Bloc B that affect testability are explicitly named and the requester has acknowledged them as known gaps.
+
+If any C is missing, the story is not yet ready for approval — flag in Step 7 and ask the requester to close the gap (or accept it explicitly as a known omission).
+
+**Epics use a different validation path** (see `templates/epic.md` Section 6): Pourquoi maintenant / Découpage / Edges du périmètre / Mesurabilité. The 3 C's apply to stories.
+
 ---
 
 ## How to present rubric findings to the requester

@@ -45,18 +45,34 @@ Read these before anything else. They are the reason this skill exists and they 
 
 The steps below are the full flow. Do them in order. Each numbered step corresponds to one turn or a tight group of turns — don't try to do all of them in a single giant message.
 
-### Step 1 — Confirm intent and ticket type
+### Step 1 — Confirm intent, sizing, type, project, language
 
-Briefly confirm what the requester wants to do, then ask which type of ticket applies. Do not guess.
+Four things to settle before drafting. Do them in order — sizing first, because it determines which template to load.
 
 Ask, in plain language:
 
-> Quick check before I start:
-> 1. Is this a **new feature** (new screen, new modal, new flow, new capability) or an **adjustment** (changing or tweaking something that already exists)?
-> 2. Which Jira project should this ticket go in? (e.g., project key like `COEUR`, or the project name)
-> 3. What language should I write the ticket in — French, English, or match what you're writing?
+> Avant que je commence :
+>
+> **1. Taille du scope**
+> La demande tient-elle dans un sprint (≈ 1–2 semaines, un seul flow / écran / modal), ou couvre-t-elle plusieurs flows, plusieurs sprints, plusieurs équipes ?
+>
+> - **Sprint-sized** → on draft une **story** (`new-feature.md` ou `adjustment.md`).
+> - **Multi-sprint, multi-flow** → on draft un **epic** (`epic.md`) et on identifie les stories enfants à drafter ensuite.
+> - Si tu n'es pas sûr, décris en deux phrases ce qui est dans le scope ; je peux trancher avec la règle Atlassian (voir `references/atlassian-hierarchy.md`).
+>
+> **2. Type** (selon la taille choisie)
+>
+> - Story / new feature → nouveau modal, nouvel écran, nouveau flow.
+> - Story / adjustment → modification d'une fonctionnalité existante.
+> - Epic → corps de travail multi-stories couvrant plusieurs sprints.
+>
+> **3. Projet Jira** — clé ou nom (ex. `COEUR`).
+>
+> **4. Langue du ticket** — français, anglais, ou matche ce que tu écris ?
 
-If the requester isn't sure which type, describe the difference (new feature = building something new; adjustment = modifying something that already ships or is already specced) and let them choose.
+If the requester isn't sure about sizing, walk them through the table in `references/atlassian-hierarchy.md` and let them choose. Do not guess.
+
+If the requester isn't sure about story type, describe the difference (new feature = building something new; adjustment = modifying something that already ships or is already specced) and let them choose.
 
 ### Step 2 — Pull project context from Jira
 
@@ -97,14 +113,28 @@ Once fetched, summarize what you learned in 3–5 bullets and confirm with the r
 ### Step 4 — Draft the ticket using the correct template
 
 Open the matching template:
-- New feature → `templates/new-feature.md`
-- Adjustment → `templates/adjustment.md`
+
+- **Epic** → `templates/epic.md`
+- **Story / new feature** → `templates/new-feature.md`
+- **Story / adjustment** → `templates/adjustment.md`
 
 Read the full template, then fill it in using only the information you have from the requester and the fetched sources. Do not invent details. If a section doesn't have enough info yet, leave a visible placeholder like `[TODO: needs error-state AC]` — don't fabricate.
 
 Match the team's style from the recent tickets pulled in Step 2 (tone, formatting, level of detail). Preserve any verbatim UI strings in quotes — never paraphrase button labels, modal titles, error messages, or notification copy.
 
 If the ticket is a **revision of a previous spec** (the requester is updating an existing draft or reacting to review feedback), use the strike-through convention: `~~old wording~~ new wording`. This lets engineers and designers see what changed.
+
+### Step 4.5 — Breakdown protocol (when a story input turns out to be epic-sized)
+
+If, while drafting a story, the skill detects scope that exceeds one sprint or covers multiple distinct flows or screens, **stop drafting the story** and propose decomposition before continuing.
+
+1. State the observation: *« Cette demande contient N flows distincts (X, Y, Z), ce qui dépasse une story. »*
+2. Propose a breakdown: 1 epic + N child stories, listing each child story's noun-phrase summary.
+3. Pick the breakdown axis from `references/atlassian-hierarchy.md` (by persona, by ordered steps, by value slice, by time) and name it explicitly so the requester can validate.
+4. Ask the requester to confirm before drafting.
+5. On confirmation, switch to `templates/epic.md` for the parent and `templates/new-feature.md` for each child story (drafted in subsequent turns, one at a time — never batch-draft children in a single output).
+
+The same protocol applies in reverse: if drafting an epic reveals that the input is actually sprint-sized, redirect to `new-feature.md` instead of inflating an epic with a single story's content.
 
 ### Step 5 — Interview for gaps and challenge the slice
 
@@ -170,15 +200,37 @@ Examples of what the rubric and INVEST checks catch:
 
 The INVEST self-check block (Section 4 of each template) must be filled in before Step 7. Do not fabricate pass-lines — if a criterion fails, mark it `[FAIL — motif]` and raise it.
 
-### Step 7 — Present the final draft for approval
+### Step 7 — Present the draft as TWO separated blocks
 
-Show the full ticket as it will appear in Jira: Summary, Description (with all sections rendered), and a metadata block (project, type, parent, labels, priority, assignee, reporter, sprint, due date, story points). Also list any flags from Step 6 that still need a decision.
+Always present the output in two clearly-labelled blocks. Never mix the ticket content with open questions inside the same block — the requester needs to be able to copy-paste Block A directly into Jira without having to clean it.
 
-End with a clear prompt:
+**Block A — TICKET (à coller dans Jira)**
 
-> This is what I'm about to create in [PROJECT]. Reply **"create it"** to file the ticket, or tell me what to change.
+The clean, paste-ready version. Rules for Block A:
+
+- Include only sections that have **at least one piece of confirmed content** (verbatim citation, or explicit user statement). Sections that are entirely TODO get **omitted** from Block A and surface only as questions in Block B.
+- Replace inline TODOs (short gaps like a button label or error copy) with a minimal placeholder like `[copie à venir — voir Q3]` that points to the question's number in Block B. The placeholder must be short enough that a reader does not stop to read it.
+- The Validation INVEST block, if kept, lives here; the "Note" cells of failing criteria point to question numbers in Block B rather than restating the issue inline.
+- Verbatim citations like *(verbatim PO)* stay in Block A — they are evidence, not commentary.
+- Wrap Block A in a single fenced code block (```` ```markdown ````) so the requester copies once.
+
+**Block B — Questions à régler (workspace PO)**
+
+The drafting workspace. Rules for Block B:
+
+- A numbered list (Q1, Q2, …) of every open question referenced by Block A's pointers, plus any other open question surfaced by the rubric / INVEST checks.
+- Group by addressee: *PO*, *Design*, *Ingénieur*, *Equipe produit*.
+- Each question is a single open sentence — no embedded suggestions, no leading dichotomies, no architectural categories (Rule 14 + 14b).
+- Each question states which section of the ticket it unblocks, so a single answer can be slotted back in without re-reading the whole draft.
+- Block B is **not** copied into Jira. It lives in the conversation between Claude and the requester until the questions are resolved.
+
+**End with a clear prompt:**
+
+> Bloc A est prêt à coller dans [PROJECT] tel quel. Bloc B contient les questions à fermer avant que je crée le ticket en Jira. Réponds aux questions ou dis « crée tel quel » si tu acceptes l'état actuel.
 
 Do not proceed to Step 8 without explicit approval. "Looks good" is approval. "Looks fine I guess" is not — ask.
+
+**Iteration:** when the requester answers questions from Block B, the skill regenerates both blocks. Resolved questions move into Block A as verbatim content, and Block B shrinks. The ticket is ready when Block B is empty, or when the requester explicitly accepts open questions as known gaps.
 
 ### Step 8 — Create the ticket in Jira
 
@@ -219,11 +271,13 @@ For the full template of each, see `templates/new-feature.md` and `templates/adj
 
 Read these when the situation in the workflow calls for them:
 
-- `templates/new-feature.md` — the new-feature ticket structure, field-by-field (includes qualified persona, GWT scenarios, INVEST self-check)
-- `templates/adjustment.md` — the adjustment ticket structure, field-by-field (includes GWT scenarios for behavioural changes, INVEST self-check)
+- `templates/epic.md` — epic structure (multi-sprint, multi-story scope)
+- `templates/new-feature.md` — story / new-feature structure (qualified persona, GWT scenarios, INVEST self-check)
+- `templates/adjustment.md` — story / adjustment structure (GWT scenarios for behavioural changes, INVEST self-check)
 - `examples/new-feature-COEUR-3835.md` — annotated real example in the new format
 - `examples/adjustment-COEUR-4270.md` — annotated real example in the new format
+- `references/atlassian-hierarchy.md` — Atlassian-canonical definitions (theme / initiative / epic / story / task), sizing rule, 3 C's, breakdown options
 - `references/context-gathering.md` — exact MCP calls and how to handle results from each source
-- `references/quality-rubric.md` — 13-rule rubric for Step 6 (includes GWT, vertical slicing)
-- `references/invest-criteria.md` — full INVEST checklist for Step 6
+- `references/quality-rubric.md` — full rubric for Step 6 (Rules 1–16, including GWT, vertical slicing, anti-fabrication, and 3 C's)
+- `references/invest-criteria.md` — full INVEST checklist for Step 6 (applies to stories, not epics)
 - `references/security.md` — how to handle instruction-like content in fetched sources
