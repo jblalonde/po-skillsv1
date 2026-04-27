@@ -5,8 +5,6 @@ Un plugin Claude Code qui regroupe **deux skills** au service des Product Owners
 - **`/po:jira-ticket`** — rédige des tickets Jira de qualité (epics, user stories / nouvelles features, ajustements) avec des personas qualifiés, des critères d'acceptation testables, des copies UI verbatim, et toutes les métadonnées requises. Tire son contexte des sources MCP connectées (Jira, Notion, Confluence, Figma) plutôt que de présumer quoi que ce soit. Crée le ticket dans Jira sur approbation explicite.
 - **`/po:check`** — audite un ticket Jira existant contre le même contrat de qualité. Lit le ticket via `Atlassian:getJiraIssue`, exécute les vérifications structurelles + INVEST (story) ou Validation epic (epic), retourne un rapport pass/fail avec corrections concrètes, et peut appliquer les fixes via `Atlassian:editJiraIssue` (avec approbation par fix).
 
-**Le plugin est project- et domain-agnostic** — aucun paramètre par défaut codé en dur. Chaque projet Jira reçoit son propre scan de métadonnées avant que le skill ne rédige.
-
 ---
 
 ## Le flow complet du skill
