@@ -6,18 +6,23 @@
       "name": "clean-new-feature-happy-path",
       "prompt": "I need to file a Jira ticket for a new 'Modifier l'abonnement' modal in the broker portal. It should let brokers change their daily lead volume and it opens from the subscription tile.",
       "user_responses_hint": "Project: COEUR. Language: French. Parent epic: WallStreet 2.0. Labels: BrokerPortal, Features. Priority: Medium. Assignee: Noah Chamberland. Provides a Figma link with node-id on request. Approves draft with 'create it'.",
-      "expected_output": "A new-feature ticket filed in COEUR with summary 'Modal Modifier l'abonnement', French description with Contexte (user story), Critères d'acceptation covering trigger/cancel/success/error paths, and a Design section with the Figma link.",
+      "expected_output": "A new-feature ticket filed in COEUR with summary 'Modal Modifier l'abonnement', French description with Contexte (qualified persona, user-story format), Acceptance criteria as a single bullet list (preconditions + trigger/cancel/success/error paths in GWT + verbatim UI copy + side-effects), Design section with Figma link, and a Details metadata block. Validation INVEST does NOT appear in Block A.",
       "assertions": [
         "Skill asked whether this is a new feature or adjustment without guessing",
         "Skill asked which project before pulling context",
         "Skill asked which language before drafting",
         "Skill called Atlassian MCP to pull project epics and labels",
+        "Block A has the 6 sections in order: Summary, Contexte, Acceptance criteria, Design, (optional Info supp/Non-inclus/Warning), Details",
         "Summary is a noun phrase naming the component",
-        "Contexte is in 'En tant que... je veux... afin de...' format",
+        "Contexte is in 'En tant que [rôle qualifié]... je souhaite... afin de...' format with role + segment/state + context",
+        "Acceptance criteria is a single bullet list (no required sub-headings like 2.1/2.2/2.3/2.4)",
+        "Behavioural ACs use GWT (Étant donné / Quand / Alors)",
         "Every AC is testable (no vague verbs like 'bien fonctionner')",
-        "UI strings are in quotes",
+        "UI strings are in quotes and verbatim from a cited source",
         "Design section contains a Figma URL with node-id parameter",
-        "Skill presented the draft and waited for explicit approval before creating",
+        "No 'Validation INVEST' section in Block A — INVEST gaps surface only in Block B",
+        "Skill presented the draft as Block A + Block B (two separated blocks)",
+        "Skill waited for explicit approval before creating",
         "Skill created the ticket via Atlassian:createJiraIssue only after approval",
         "Final response includes the ticket key and browse URL"
       ]
@@ -27,15 +32,18 @@
       "name": "adjustment-happy-path",
       "prompt": "Can you create a Jira ticket to change the default SMS notification setting for new leads from off to on?",
       "user_responses_hint": "Project: COEUR. Language: French. No Figma needed (behavioral change). No story points.",
-      "expected_output": "An adjustment ticket filed in COEUR with summary starting with a verb of change, French description with Contexte (state of world) and Comportement souhaité, no Design section.",
+      "expected_output": "An adjustment ticket filed in COEUR with summary starting with a verb of change, French description with Contexte (state of world + affected segment) and Comportement souhaité as a single bullet list, no Design section, and a Details metadata block. Validation INVEST does NOT appear in Block A.",
       "assertions": [
         "Skill identified this as an adjustment, not a new feature",
-        "Summary starts with a change verb (Changer, Modifier, Mettre à jour)",
-        "Contexte describes current state + what's changing, NOT in user-story format",
-        "Description uses 'Comportement souhaité' header, not 'Critères d'acceptation'",
+        "Summary starts with a change verb (Changer, Modifier, Mettre à jour, Ajouter, Retirer)",
+        "Contexte describes current state + what's changing + why + affected segment, NOT in user-story format",
+        "Description uses 'Comportement souhaité' header (not 'Acceptance criteria')",
+        "Comportement souhaité is a single bullet list (no required sub-headings)",
+        "Behavioural changes use GWT (Étant donné / Quand / Alors)",
         "No Design section in the ticket",
+        "No 'Validation INVEST' section in Block A — INVEST gaps surface only in Block B",
         "Skill asked about story points and accepted the omission explicitly",
-        "Skill presented draft and got approval before creating",
+        "Skill presented draft as Block A + Block B and got approval before creating",
         "Ticket created via MCP with correct metadata"
       ]
     },
@@ -86,8 +94,9 @@
       "expected_output": "Ticket is written in English, using 'As a ... I want ... so that ...' for the Contexte.",
       "assertions": [
         "All sections in English",
-        "Contexte uses 'As a ... I want ... so that ...' format",
-        "Section header reads 'Acceptance criteria', not 'Critères d'acceptation'"
+        "Contexte uses 'As a [qualified role with segment/state] ... I want ... so that ...' format",
+        "Section header reads 'Acceptance criteria', not 'Critères d'acceptation'",
+        "Block A and Block B are clearly separated, both labelled in English"
       ]
     },
     {
@@ -171,6 +180,31 @@
         "Skill summarized each source before drafting",
         "If sources conflict, skill flagged the conflict to the requester",
         "Final ticket reflects consolidated understanding, not a copy-paste"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "epic-happy-path",
+      "prompt": "I need to file an epic for the new broker subscription system. Scope: brokers can activate, monitor, and deactivate a daily-volume subscription that automatically sends them new leads. Covers a new modal, a dashboard, payment integration, and the deactivation flow. Multi-sprint, definitely epic-sized.",
+      "user_responses_hint": "Project: COEUR. Language: French. Initiative: WallStreet 2.0 (no Jira key for it yet). Affected personas: courtiers abonnés à la boutique de leads. Out of scope: lead-distribution rules (separate epic), broker-onboarding flow. Child stories envisaged: Modal Activer l'abonnement, Tableau de bord d'abonnement, Désactiver un abonnement actif, Historique des transactions. Approves with 'crée tel quel'.",
+      "expected_output": "An epic ticket filed in COEUR with French description in eight Block A sections — Summary (noun phrase, action-neutral), Objectif (1-2 sentences), Contexte (état du monde + pourquoi maintenant + segments), Acceptance criteria (3-6 epic-level observable bullets, NOT GWT), Design général (omitted if no link), Non-inclus (explicit out-of-scope list), Stories enfants (checklist), Details. The 4-line Validation epic check runs silently and only failing items appear as Block B questions.",
+      "assertions": [
+        "Skill recognized the input as epic-sized at Step 1 (sprint-vs-multi-sprint check)",
+        "Skill loaded templates/epic.md, not new-feature.md",
+        "Block A has 8 sections in order: Summary, Objectif, Contexte, Acceptance criteria, Design général (or omitted), Non-inclus, Stories enfants, Details",
+        "Summary is a noun phrase, action-neutral (no verbs like 'Activer', 'Construire')",
+        "Objectif is 1-2 observable sentences naming what the epic delivers",
+        "Contexte names the affected user segments with role + segment/state qualification (no 'utilisateurs')",
+        "Acceptance criteria has 3-6 bullets, each observable and measurable",
+        "Acceptance criteria contains NO GWT scenarios (those belong in child stories)",
+        "Acceptance criteria contains NO fabricated service/event/table/field names",
+        "Non-inclus is explicit and lists at least one adjacent capability that is intentionally out of scope",
+        "Stories enfants is a checklist with each child = one vertical slice (no layer-named children like 'Backend pour X')",
+        "No 'Validation epic' section in Block A — failing checks surface only in Block B",
+        "Skill presented the draft as Block A + Block B (two separated blocks)",
+        "Skill waited for explicit approval before creating",
+        "Ticket created via Atlassian:createJiraIssue with issue type Epic",
+        "Final response includes the ticket key and browse URL"
       ]
     }
   ]

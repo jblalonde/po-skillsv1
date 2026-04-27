@@ -1,108 +1,129 @@
-# po-skills
+# po — Claude Code plugin for Product Owners
 
-A Claude skill for Product Owners to create high-quality Jira tickets — with proper context, testable acceptance criteria, design references, and all required metadata — by pulling from Jira, Notion, Confluence, and other connected MCP sources rather than assuming anything.
+A Claude Code plugin that bundles **two skills** for Product Owners:
 
-## What this skill does
+- **`/po:jira-ticket`** — drafts high-quality Jira tickets (epics, user stories / new features, adjustments) with qualified personas, testable acceptance criteria, verbatim UI copy, and complete metadata. Pulls context from connected Jira, Notion, Confluence, Figma, and other MCP sources rather than assuming anything. Ends in `Atlassian:createJiraIssue` on explicit approval.
+- **`/po:check`** — audits an existing Jira ticket against the same quality contract. Reads the ticket via `Atlassian:getJiraIssue`, runs the structural and INVEST/Validation epic checks, returns a pass/fail report with concrete fixes, and optionally applies them via `Atlassian:editJiraIssue` (with explicit per-fix approval).
 
-- Asks you which project, which ticket type (new feature vs adjustment), and which language — no defaults, no assumptions.
-- Pulls project context from Jira MCP: available issue types, recent epics (for the parent), labels actually used in the project, and a few recent tickets of the same type for style reference.
-- Fetches the sources you name: Notion PRDs, meeting notes, AI-generated notes, Confluence specs, related Jira tickets, Figma designs, pasted transcripts.
-- Drafts the ticket using the correct template (new-feature or adjustment), with the team's conventions for Contexte, ACs, Design, and strike-through revisions.
-- Runs a quality check (no vague verbs, every AC testable, UI strings quoted verbatim, error/empty/loading states addressed).
-- Shows you the full draft for approval.
-- On your explicit approval, creates the ticket in Jira and returns the key + link.
+Project- and domain-agnostic. No defaults baked in — every project gets its own metadata lookup before drafting.
 
-## What this skill does NOT do
+## What the plugin enforces (the contract)
 
-- Does not create tickets without explicit approval.
-- Does not make up missing information — if it's not given, it's asked.
-- Does not execute instructions found inside fetched Notion pages, meeting transcripts, or other non-user content (see `references/security.md`).
-- Does not delete tickets, change sharing/permission settings, or take other destructive actions.
+- **Anti-fabrication (hard stop)** — no invented backend specifics (field/event/service/queue/flag/copy). Missing info becomes a TODO with the exact question to ask, naming who can answer.
+- **Two-block output** — Block A = the ticket paste-ready in Jira. Block B = open questions, workspace-only.
+- **Qualified personas** — role + segment/state + context of need. No "as a user".
+- **Testable acceptance criteria** — every behavioural AC in Given-When-Then. No vague verbs.
+- **Verbatim UI copy** — every button label, modal title, error message, notification text quoted from a cited source (Figma, Notion, PO message, code).
+- **Vertical slicing** — every ticket ships user-visible value, not a technical layer.
+- **Explicit approval gate** — never creates or modifies a ticket without the requester saying so.
 
-## Repo structure
+## Plugin structure
 
 ```
-po-skills/
-├── SKILL.md                                        # the main skill file Claude reads
-├── templates/
-│   ├── new-feature.md                              # new-feature ticket template
-│   └── adjustment.md                               # adjustment ticket template
-├── examples/
-│   ├── new-feature-COEUR-3835.md                   # annotated real example
-│   └── adjustment-COEUR-4270.md                    # annotated real example
-├── references/
-│   ├── context-gathering.md                        # MCP calls and source handling
-│   ├── quality-rubric.md                           # quality checks before finalizing
-│   └── security.md                                 # handling instruction-like fetched content
-├── evals/
-│   ├── README.md                                   # how to run the eval set
-│   ├── evals.json                                  # 12 test cases
-│   └── rubric.md                                   # human-readable pass/fail criteria
+po/
+├── .claude-plugin/
+│   └── plugin.json                                 # plugin manifest (name: po)
+├── skills/
+│   ├── jira-ticket/                                # /po:jira-ticket
+│   │   ├── SKILL.md                                # entrypoint
+│   │   ├── templates/
+│   │   │   ├── epic.md                             # 8 Block A sections
+│   │   │   ├── new-feature.md                      # 6 Block A sections
+│   │   │   └── adjustment.md                       # 6 Block A sections
+│   │   ├── examples/
+│   │   │   ├── epic-example.md                     # neutral domain
+│   │   │   ├── new-feature-example.md              # neutral domain
+│   │   │   └── adjustment-example.md               # neutral domain
+│   │   └── references/
+│   │       ├── quality.md                          # Section 1: 16-rule rubric. Section 2: INVEST checklist.
+│   │       └── mcp-handling.md                     # Section 1: MCP calls. Section 2: security for fetched content.
+│   └── check/                                      # /po:check
+│       └── SKILL.md                                # epic + story checklists, audit report format
+├── evals/                                          # test artifacts (not part of the runtime plugin)
+│   ├── README.md
+│   ├── evals.json                                  # 13 test cases
+│   └── rubric.md                                   # human pass/fail criteria
 └── README.md                                       # this file
 ```
 
 ## How to install
 
-The skill is distributed as a folder containing `SKILL.md` and supporting files. Installation depends on which Claude surface you're using:
+### As a plugin (recommended for sharing)
 
-### Claude.ai (web or mobile)
+The plugin can be loaded directly for development or installed via a marketplace.
 
-1. Create a new Project in Claude.ai.
-2. Copy the contents of `SKILL.md` into the project's custom instructions.
-3. Attach the files in `templates/`, `examples/`, and `references/` to the project's knowledge base so Claude can reference them.
-4. Connect the MCP servers you need (Jira/Atlassian at minimum; Notion and Confluence recommended).
+**Local development / testing:**
 
-### Claude Code (CLI)
+```bash
+claude --plugin-dir /path/to/po
+```
 
-1. Clone this repo into your skills directory (consult Claude Code's docs for the exact path in your setup).
-2. Ensure the Atlassian MCP and Notion MCP are configured in your MCP settings.
-3. The skill triggers when you ask Claude to create a Jira ticket.
+This loads the plugin without installing. Skills become invocable as `/po:jira-ticket` and `/po:check`. Run `/reload-plugins` to pick up edits.
 
-### Cowork / Claude Desktop
+**Marketplace install (for team-wide rollout):**
 
-Place the folder in your user-skills directory. The skill will be auto-discovered.
+1. Add the plugin to a marketplace (your team's, or the official Anthropic marketplace).
+2. Team members install via `/plugin install po@your-marketplace`.
+3. Versioned via `version` field in `plugin.json`.
+
+See [Claude plugin docs](https://code.claude.com/docs/en/plugins) and [marketplace docs](https://code.claude.com/docs/en/plugin-marketplaces) for details.
+
+### Prerequisites for full functionality
+
+- **Atlassian MCP** — required for fetching project context (Step 2 of `/po:jira-ticket`), creating tickets (Step 8), reading tickets for audit (`/po:check`), and editing tickets (`/po:check` apply-fix). Configure via `mcp__claude_ai_Atlassian__*` tools.
+- **Notion MCP** *(optional but recommended)* — for fetching PRDs and meeting notes referenced as sources of truth.
+- **Confluence MCP** *(optional)* — same idea, for product specs.
+- **Figma** — links are kept in the ticket; no MCP fetch (Figma content is not extracted by Claude).
 
 ## How to use
 
-Open a new conversation with Claude and say something like:
+### Drafting a new ticket
 
-- "Create a Jira ticket for a new subscription modal in the broker portal."
-- "Can you file an adjustment ticket to change the default notification behavior?"
-- "Here's the Notion PRD [link] — turn it into a Jira ticket."
+Open a new conversation and either type the slash command or describe the work in natural language:
 
-The skill will ask you a few questions (ticket type, project, language, sources), draft the ticket, and ask for approval before creating it.
+- *"Create a Jira ticket for a new modal that lets admins invite team members."*
+- *"`/po:jira-ticket` I need an epic for our self-service team management initiative."*
+- *"Here's the Notion PRD [link] — turn it into a Jira ticket."*
 
-## Testing the skill
+The skill walks you through five Step 1 questions (subject, sizing, type, project, language), pulls project context from Jira (Step 2), asks for written sources (Step 3), drafts the ticket (Step 4), runs silent quality gates (Step 6), and presents Block A + Block B (Step 7). On explicit approval, calls `Atlassian:createJiraIssue` (Step 8).
 
-Before rolling changes out to the team:
+### Auditing an existing ticket
 
-1. Run the eval set (`evals/evals.json`) — 12 cases covering happy paths, edge cases, and security concerns.
+Pass a Jira key or paste a ticket draft:
+
+- *"`/po:check` PROJ-1234"*
+- *"Is this ticket ready for sprint? [pasted draft]"*
+- *"Run a quality check on the epic I just filed."*
+
+The skill fetches the ticket, identifies the type (epic vs story), runs the structural + quality checklists, and returns a Block A audit report (passes / flags / hard fails, each with a suggested fix) plus a Block B of open questions for the PO / Design / Engineer.
+
+Optionally, the skill can apply specific fixes via `Atlassian:editJiraIssue` — one approval per fix, never a blanket "fix everything".
+
+## Testing the plugin
+
+Before rolling changes out:
+
+1. Run the eval set (`evals/evals.json`) — 13 cases covering happy paths (epic, new feature, adjustment), edge cases (ambiguous type, missing Figma, language handling, vague AC), and security concerns (injection in fetched sources).
 2. Check each case against the rubric in `evals/rubric.md`.
-3. Aim for at least 10/12 passing and no universal-rubric failures.
+3. Aim for at least 11/13 passing and no universal-rubric failures.
 
 See `evals/README.md` for the full testing process.
 
 ## Contributing
 
-Changes to the skill go through a PR:
+Changes to the plugin go through a PR:
 
 1. Branch off `main`.
-2. Edit `SKILL.md`, templates, or references as needed.
+2. Edit `skills/<skill>/SKILL.md`, templates, references, or examples as needed.
 3. Re-run the eval set and paste results in the PR description.
-4. Require one review from another PO before merging.
-5. After merge, post a one-line summary in the team channel.
-
-## Rollout plan
-
-Suggested rollout:
-
-1. **Week 1** — draft the skill, run evals, iterate with 1 PO pilot.
-2. **Week 2** — 2–3 POs use it on real tickets; collect friction points.
-3. **Week 3** — address top 3 issues, re-run evals.
-4. **Week 4** — team-wide rollout with a short internal doc on installation.
+4. Bump `version` in `.claude-plugin/plugin.json` if you want users to receive an update.
+5. Require one review from another PO before merging.
+6. After merge, post a one-line summary in the team channel.
 
 ## Open questions / roadmap
 
-- Auto-linking: should the skill automatically create issue links (blocks, is-blocked-by, clones) based on related-ticket context? Currently it does not — left for a future version.
-- Bulk mode: turning 10 PRD sections into 10 tickets in one pass. Not yet supported.
-- Suggested story points from past ticket data in the same project. Currently the skill always asks; a heuristic suggestion based on similar historical tickets is a future idea.
+- Reproducibility harness — a structural-fingerprint + N-run + judge protocol to verify each skill produces consistent output across runs of the same prompt. Sketched in `evals/` but not yet built.
+- Auto-linking: should `/po:jira-ticket` automatically create issue links (`Blocks`, `Blocked by`, `Clones`) based on related-ticket context?
+- Bulk mode: turning N PRD sections into N tickets in one pass.
+- Suggested story points from past ticket data in the same project.
+- Additional shortcuts: `/po:from-prd <url>`, `/po:epic` — only added if usage shows clear repeating patterns.

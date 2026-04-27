@@ -1,0 +1,8 @@
+{
+  "name": "po",
+  "description": "Product Owner toolkit for high-quality Jira tickets — drafts epics, user stories (new features), and adjustments with qualified personas, testable acceptance criteria, verbatim UI copy, and complete metadata. Bundles a quality-audit skill that checks existing tickets against the same contract. Project- and domain-agnostic.",
+  "version": "1.0.0",
+  "author": {
+    "name": "PO toolkit"
+  }
+}

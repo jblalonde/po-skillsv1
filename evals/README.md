@@ -35,6 +35,7 @@ For a more rigorous approach with parallel subagents and scoring, see the `skill
 | 10 | No project given | Skill asks which project rather than defaulting |
 | 11 | Vague AC — "should feel responsive" | Skill's quality rubric catches this and proposes a measurable version |
 | 12 | Multi-source context (Notion + Figma + Jira) | Skill pulls all three, deduplicates, summarizes, proceeds |
+| 13 | Epic (happy path) | Skill recognizes epic-sized scope, loads `templates/epic.md`, drafts the 8 Block A sections, keeps Validation epic out of Block A, lists child stories as vertical slices |
 
 ## What "passing" looks like
 
