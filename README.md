@@ -313,16 +313,6 @@ Les changements au plugin passent par une PR :
 
 ---
 
-## Roadmap
-
-- **Harness de reproductibilité** — un protocole structural-fingerprint + N runs + judge pour vérifier que chaque skill produit une sortie cohérente sur le même prompt. Esquissé dans `evals/`, pas encore construit.
-- **Auto-linking** — `/po:jira-ticket` pourrait créer automatiquement les liens (`Blocks`, `Blocked by`, `Clones`) basés sur le contexte des tickets liés. Actuellement non.
-- **Mode bulk** — transformer N sections d'un PRD en N tickets en une passe. Pas encore supporté.
-- **Suggestion de story points** depuis les données historiques du projet. Actuellement, le skill demande toujours.
-- **Shortcuts additionnels** — `/po:from-prd <url>`, `/po:epic` — ajoutés seulement si l'usage montre des séquences répétitives claires.
-
----
-
 ## Crédits & ressources
 
 - Construit pour Claude Code en suivant la [doc skills](https://code.claude.com/docs/en/skills) et la [doc plugins](https://code.claude.com/docs/en/plugins).
