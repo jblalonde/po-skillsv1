@@ -9,22 +9,6 @@ Un plugin Claude Code qui regroupe **deux skills** au service des Product Owners
 
 ---
 
-## Le contrat enforced par le plugin
-
-Tout ticket produit ou audité par ce plugin doit satisfaire ces règles :
-
-| Règle | Description |
-|---|---|
-| **Anti-fabrication (hard stop)** | Aucun nom de champ, table, événement, service, queue, flag, ou copie UI inventé. Information manquante = `[TODO]` avec la question précise à poser et qui peut y répondre. |
-| **Sortie en deux blocs** | Bloc A = le ticket prêt à coller dans Jira. Bloc B = les questions ouvertes, jamais collées dans Jira (workspace seulement). |
-| **Persona qualifié** | Rôle + segment/état + contexte du besoin. Pas de *« en tant qu'utilisateur »*. |
-| **Critères d'acceptation testables** | Tout AC comportemental en *Étant donné / Quand / Alors* (Given-When-Then). Pas de verbes vagues (*« fluide »*, *« intuitif »*, *« bien fonctionner »*). |
-| **Copie UI verbatim** | Chaque libellé de bouton, titre de modal, message d'erreur, copie de notification est cité depuis une source réelle (Figma, Notion, message PO, code). |
-| **Tranchage vertical** | Chaque ticket livre une valeur visible utilisateur, pas une couche technique. Pas de *« Backend pour Y »*. |
-| **Gate d'approbation explicite** | Aucune création ni modification de ticket sans l'accord explicite du requester. |
-
----
-
 ## Le flow complet du skill
 
 ```mermaid
