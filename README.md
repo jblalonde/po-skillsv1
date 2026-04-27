@@ -234,7 +234,129 @@ Validation epic — flags surfacés
 
 Sur réponse aux questions → Bloc B se vide → approbation explicite → `Atlassian:createJiraIssue` → clé + URL retournées.
 
-### Exemple 2 — Auditer un ticket existant
+### Exemple 2 — Rédiger une user story (nouvelle feature, child de l'epic ci-dessus)
+
+**Invocation :**
+
+```
+/po:jira-ticket
+
+Maintenant je veux drafter la première story enfant de l'epic PROJ-1050 :
+le modal qui permet à l'admin d'inviter un nouveau membre par courriel.
+```
+
+**Le skill répond avec** : 5 questions de cadrage → confirmation que c'est sprint-sized + new feature + parent epic = PROJ-1050 → scan du projet PROJ → demande des sources (PRD §2 sur l'invitation, Figma node-id) → rédige la story en Bloc A + Bloc B.
+
+**Bloc A (extrait) :**
+
+```markdown
+## Summary
+Modal Inviter un membre
+
+## Contexte
+En tant qu'admin d'une équipe de 10+ membres, lorsque je dois ajouter un
+nouveau collaborateur sans passer par le support, je souhaite l'inviter par
+courriel avec un rôle pré-sélectionné afin que mon équipe puisse intégrer
+la personne en quelques minutes plutôt qu'en quelques jours.
+
+**Contraintes**
+- L'envoi de courriels passe par le vendeur d'envoi sous contrat (voir PROJ-1100).
+- L'invitation n'apparaît dans la liste qu'après confirmation d'envoi par le vendeur.
+
+## Acceptance criteria
+
+**Préconditions**
+- L'admin est authentifié.
+- L'admin a la permission « inviter un membre » (introduite dans PROJ-1100).
+- La liste des membres est visible dans la section « Équipe ».
+
+**Scénarios**
+
+**Scénario — Invitation envoyée à une adresse valide**
+- Étant donné qu'un admin a ouvert le modal
+- Quand il saisit une adresse courriel valide, sélectionne « Membre standard »,
+  et clique sur « Envoyer l'invitation »
+- Alors le bouton affiche un spinner et est désactivé
+- Et le système met le courriel en file d'envoi
+- Et au retour du vendeur, le modal de confirmation s'affiche (voir PROJ-1201)
+
+**Scénario — Adresse courriel invalide**
+- Étant donné qu'un admin a saisi une adresse mal formée
+- Quand il clique sur « Envoyer l'invitation »
+- Alors le modal reste ouvert
+- Et le message « Adresse courriel invalide. Veuillez vérifier l'orthographe. »
+  s'affiche sous le champ courriel (verbatim, source : PO)
+- Et aucun courriel n'est mis en file d'envoi
+
+**Scénario — Échec côté vendeur d'envoi**
+- Étant donné qu'un admin a cliqué sur « Envoyer l'invitation »
+- Quand le vendeur retourne une erreur
+- Alors le message « Échec de l'envoi. Veuillez réessayer. » s'affiche
+
+**Scénario — Annulation**
+- Étant donné qu'un admin a ouvert le modal
+- Quand il clique sur « Annuler »
+- Alors le modal se ferme et aucun appel n'est fait au vendeur
+
+**Règles & contraintes**
+- Titre du modal : « Inviter un membre » (verbatim, Notion PRD §2.1)
+- Rôles offerts : « Admin », « Membre standard », « Lecture seule » (PROJ-1100)
+- Une seule adresse courriel par invitation (multi-saisie hors-scope, voir Non-inclus)
+- Boutons : « Annuler » (secondaire), « Envoyer l'invitation » (primaire)
+
+**Effets de bord système**
+- À la confirmation du vendeur, l'invitation est créée avec le statut « En attente »
+  (séquence implémentée dans PROJ-1100, l'engineer reprend le pattern existant).
+- Voir Q3 en Bloc B pour les détails exacts (table, événements émis).
+
+## Design
+[Screenshot embedded]
+https://www.figma.com/design/<file>/Team-Management?m=auto&node-id=<id>
+
+## Non-inclus
+- Invitation multiple depuis CSV — voir PROJ-1300, à drafter séparément.
+- Personnalisation de la copie du courriel — hors-scope (voir PROJ-1305).
+- Suivi en temps réel de l'ouverture du courriel par l'invité — hors-scope.
+
+## Details
+- Project: PROJ
+- Issue type: Task
+- Parent epic: PROJ-1050
+- Labels: Team, Features
+- Priority: Medium
+- Assignee: [Engineer name]
+- Reporter: [PO name]
+- Sprint: Sprint 1 of the 2-sprint plan
+- Story points: 2
+- Linked tickets: Blocks PROJ-1201, Relates to PROJ-1100
+```
+
+**Bloc B (extrait) :**
+
+```
+Pour la PO
+- Q1 (débloque Règles & contraintes — durée d'expiration)
+  Le lien d'inscription est valide combien de temps ? 7 jours est-il
+  configurable par l'admin ou fixe ?
+
+Pour Ingénieur
+- Q3 (débloque Effets de bord système)
+  Quels effets observables côté backend à la confirmation de mise en file
+  par le vendeur ? Pour chaque effet : sa nature, où il s'observe, comment
+  le vérifier. Citer depuis le code ou la doc.
+
+Validation INVEST — flags surfacés
+- I — Independent     ✅  Livrable seul, bloque PROJ-1201.
+- N — Negotiable      ✅  AC décrit les outcomes, pas l'implémentation.
+- V — Valuable        ✅  Admin invite par lui-même, sans support.
+- E — Estimable       ✅  2 points (Q3 ne bloque pas, le pattern existe).
+- S — Small           ✅  Une seule capacité (invitation simple).
+- T — Testable        ✅  Quatre scénarios GWT, copie UI verbatim sourcée.
+```
+
+Sur réponse à Q1 et Q3 → Bloc B se vide → approbation explicite → ticket créé dans Jira → clé `PROJ-1051` + URL retournées.
+
+### Exemple 3 — Auditer un ticket existant
 
 **Invocation :**
 
