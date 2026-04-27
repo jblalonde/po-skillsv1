@@ -1,9 +1,9 @@
-# po — Plugin Claude Code pour Product Owners
+# po: Plugin Claude Code pour Product Owners
 
 Un plugin Claude Code qui regroupe **deux skills** au service des Product Owners :
 
-- **`/po:jira-ticket`** — rédige des tickets Jira de qualité (epics, user stories / nouvelles features, ajustements) avec des personas qualifiés, des critères d'acceptation testables, des copies UI verbatim, et toutes les métadonnées requises. Tire son contexte des sources MCP connectées (Jira, Notion, Confluence, Figma) plutôt que de présumer quoi que ce soit. Crée le ticket dans Jira sur approbation explicite.
-- **`/po:check`** — audite un ticket Jira existant contre le même contrat de qualité. Lit le ticket via `Atlassian:getJiraIssue`, exécute les vérifications structurelles + INVEST (story) ou Validation epic (epic), retourne un rapport pass/fail avec corrections concrètes, et peut appliquer les fixes via `Atlassian:editJiraIssue` (avec approbation par fix).
+- **`/po:jira-ticket`**: rédige des tickets Jira de qualité (epics, user stories / nouvelles features, ajustements) avec des personas qualifiés, des critères d'acceptabilité testables, des copies UI verbatim, et toutes les métadonnées requises. Tire son contexte des sources MCP connectées (Jira, Notion, Confluence, Figma) plutôt que de présumer quoi que ce soit. Crée le ticket dans Jira sur approbation explicite.
+- **`/po:check`**: audite un ticket Jira existant contre le même contrat de qualité. Lit le ticket via `Atlassian:getJiraIssue`, exécute les vérifications structurelles + INVEST (story) ou Validation epic (epic), retourne un rapport pass/fail avec corrections concrètes, et peut appliquer les fixes via `Atlassian:editJiraIssue` (avec approbation par fix).
 
 ---
 
@@ -11,35 +11,35 @@ Un plugin Claude Code qui regroupe **deux skills** au service des Product Owners
 
 ```mermaid
 flowchart TD
-    Start([Le PO dit :<br/>« j'ai besoin d'un ticket »]) --> Q1[1 — Le skill pose 5 questions :<br/>• De quoi parle le travail ?<br/>• Gros ou petit epic vs story ?<br/>• Nouvelle chose ou modification ?<br/>• Quel projet Jira ?<br/>• Quelle langue ?]
+    Start([Le PO dit :<br/>« j'ai besoin d'un ticket »]) --> Q1[1, Le skill pose 5 questions :<br/>• De quoi parle le travail ?<br/>• Gros ou petit epic vs story ?<br/>• Nouvelle chose ou modification ?<br/>• Quel projet Jira ?<br/>• Quelle langue ?]
 
     Q1 --> Sized{Plusieurs sprints ?<br/>Plusieurs flows ?}
     Sized -->|Oui| Tpl1[Template Epic]
     Sized -->|Non, tient<br/>en un sprint| Type{Nouveau ou<br/>modification ?}
-    Type -->|Nouvelle chose| Tpl2[Template Story —<br/>nouvelle feature]
-    Type -->|Modification| Tpl3[Template Story —<br/>ajustement]
+    Type -->|Nouvelle chose| Tpl2[Template Story,<br/>nouvelle feature]
+    Type -->|Modification| Tpl3[Template Story,<br/>ajustement]
 
-    Tpl1 --> Scan[2 — Le skill scanne le projet via Jira :<br/>epics récents, labels utilisés,<br/>style des derniers tickets]
+    Tpl1 --> Scan[2, Le skill scanne le projet via Jira :<br/>epics récents, labels utilisés,<br/>style des derniers tickets]
     Tpl2 --> Scan
     Tpl3 --> Scan
 
-    Scan --> Sources[3 — Le skill demande les sources écrites :<br/>PRD Notion, notes de réunion, Figma,<br/>tickets liés, transcripts]
+    Scan --> Sources[3, Le skill demande les sources écrites :<br/>PRD Notion, notes de réunion, Figma,<br/>tickets liés, transcripts]
     Sources --> Fetch[Le skill lit chaque source<br/>et résume en 3-5 points<br/>pour confirmer sa lecture]
-    Fetch --> Draft[4 — Le skill rédige le ticket<br/>en utilisant SEULEMENT<br/>les informations confirmées]
+    Fetch --> Draft[4, Le skill rédige le ticket<br/>en utilisant SEULEMENT<br/>les informations confirmées]
 
     Draft -.->|Règle absolue| Anti[INTERDIT D'INVENTER<br/>noms de champs, services, copies UI,<br/>chiffres, seuils.<br/>Information manquante = TODO<br/>avec la question précise à poser]
 
-    Draft --> Quality[5 — Vérification qualité, silencieuse :<br/>• Persona qualifié rôle + segment + contexte<br/>• Chaque critère est testable<br/>• Copie UI citée verbatim depuis une source<br/>• Le ticket livre une valeur visible utilisateur<br/>• Les 6 critères INVEST passent]
+    Draft --> Quality[5, Vérification qualité, silencieuse :<br/>• Persona qualifié rôle + segment + contexte<br/>• Chaque critère est testable<br/>• Copie UI citée verbatim depuis une source<br/>• Le ticket livre une valeur visible utilisateur<br/>• Les 6 critères INVEST passent]
 
-    Quality --> Output[6 — Sortie en DEUX blocs séparés]
-    Output --> A[BLOC A — Le ticket<br/>prêt à coller dans Jira tel quel]
-    Output --> B[BLOC B — Questions ouvertes<br/>jamais collées dans Jira,<br/>regroupées par destinataire :<br/>PO / Design / Ingénieur]
+    Quality --> Output[6, Sortie en DEUX blocs séparés]
+    Output --> A[BLOC A, Le ticket<br/>prêt à coller dans Jira tel quel]
+    Output --> B[BLOC B, Questions ouvertes<br/>jamais collées dans Jira,<br/>regroupées par destinataire :<br/>PO / Design / Ingénieur]
 
     A --> Approve{Approbation<br/>explicite du PO ?}
     B --> Approve
 
     Approve -->|Le PO répond aux questions<br/>ou demande des ajustements| Draft
-    Approve -->|« crée tel quel »| Create[7 — Le skill crée le ticket<br/>dans Jira via le MCP Atlassian]
+    Approve -->|« crée tel quel »| Create[7, Le skill crée le ticket<br/>dans Jira via le MCP Atlassian]
 
     Create --> End([Ticket créé<br/>clé Jira + URL retournées au PO])
 
@@ -59,12 +59,12 @@ flowchart TD
 
 ### Légende des couleurs
 
-- 🔵 **Bleu** — phase de cadrage / contexte (le skill pose des questions, scanne le projet, lit les sources).
-- 🟡 **Beige** — phase de rédaction.
-- 🔴 **Rouge** (callout en pointillé) — la règle anti-fabrication. La seule règle qui ne se contourne pas.
-- 🌸 **Rose pâle** — la vérification qualité, qui tourne en silence avant la livraison.
-- 🟢 **Vert** — ce qui est livré (Bloc A) ou créé dans Jira.
-- 🟨 **Jaune** — la gate d'approbation. Tant que le PO ne dit pas *« crée tel quel »*, rien n'est créé dans Jira.
+- 🔵 **Bleu**, phase de cadrage / contexte (le skill pose des questions, scanne le projet, lit les sources).
+- 🟡 **Beige**, phase de rédaction.
+- 🔴 **Rouge** (callout en pointillé), la règle anti-fabrication. La seule règle qui ne se contourne pas.
+- 🌸 **Rose pâle**, la vérification qualité, qui tourne en silence avant la livraison.
+- 🟢 **Vert**, ce qui est livré (Bloc A) ou créé dans Jira.
+- 🟨 **Jaune**, la gate d'approbation. Tant que le PO ne dit pas *« crée tel quel »*, rien n'est créé dans Jira.
 
 ---
 
@@ -103,10 +103,10 @@ po/
 
 ### Pré-requis
 
-- **Atlassian MCP** — requis pour scanner le projet (Étape 2 de `/po:jira-ticket`), créer les tickets (Étape 8), lire les tickets pour audit (`/po:check`), et appliquer les fixes (`/po:check` apply-fix).
-- **Notion MCP** *(optionnel mais recommandé)* — pour les PRD et notes de réunion référencés en source de vérité.
-- **Confluence MCP** *(optionnel)* — même idée, pour les specs produit.
-- **Figma** — les liens sont préservés dans le ticket ; pas de fetch (le contenu Figma n'est pas extrait).
+- **Atlassian MCP**: requis pour scanner le projet (Étape 2 de `/po:jira-ticket`), créer les tickets (Étape 8), lire les tickets pour audit (`/po:check`), et appliquer les fixes (`/po:check` apply-fix).
+- **Notion MCP** *(optionnel mais recommandé)*, pour les PRD et notes de réunion référencés en source de vérité.
+- **Confluence MCP** *(optionnel)*, même idée, pour les specs produit.
+- **Figma**: les liens sont préservés dans le ticket ; pas de fetch (le contenu Figma n'est pas extrait).
 
 ### Test local
 
@@ -128,9 +128,9 @@ Voir la [doc plugins Claude](https://code.claude.com/docs/en/plugins) et la [doc
 
 ---
 
-## Comment l'utiliser — exemples concrets
+## Comment l'utiliser: exemples concrets
 
-### Exemple 1 — Rédiger un epic
+### Exemple 1: Rédiger un epic
 
 **Invocation :**
 
@@ -148,7 +148,7 @@ membres sans passer par le support. Couvre 2-3 sprints.
 
 ```markdown
 ## Summary
-Self-service team management — invitations, rôles, retraits
+Self-service team management, invitations, rôles, retraits
 
 ## Objectif
 Permettre à un admin d'équipe d'inviter, modifier le rôle, et retirer un
@@ -172,17 +172,17 @@ freins à l'activation d'un nouveau client B2B...
 - L'historique des changements est consultable sur les 12 derniers mois.
 
 ## Non-inclus
-- Single Sign-On (SSO) — couvert par une autre initiative, hors-scope.
-- Gestion des invitations en bulk depuis CSV — reportée (PROJ-1300).
+- Single Sign-On (SSO), couvert par une autre initiative, hors-scope.
+- Gestion des invitations en bulk depuis CSV, reportée (PROJ-1300).
 - Personnalisation par l'admin de la copie du courriel d'invitation (PROJ-1305).
-- Modification du modèle de rôles existant — la version actuelle reste en place.
+- Modification du modèle de rôles existant, la version actuelle reste en place.
 
 ## Stories enfants
-- [ ] Modal Inviter un membre — Sprint 1
-- [ ] Liste des membres avec rôle — Sprint 1
-- [ ] Modifier le rôle d'un membre — Sprint 2
-- [ ] Retirer un membre — Sprint 2
-- [ ] Historique des changements — Sprint 3
+- [ ] Modal Inviter un membre, Sprint 1
+- [ ] Liste des membres avec rôle, Sprint 1
+- [ ] Modifier le rôle d'un membre, Sprint 2
+- [ ] Retirer un membre, Sprint 2
+- [ ] Historique des changements, Sprint 3
 
 ## Details
 - Project: PROJ
@@ -197,17 +197,17 @@ freins à l'activation d'un nouveau client B2B...
 
 ```
 Pour la PO
-- Q1 (débloque AC bullet 4 — historique 12 mois) Pourquoi 12 mois ? Y a-t-il
+- Q1 (débloque AC bullet 4, historique 12 mois) Pourquoi 12 mois ? Y a-t-il
   une exigence légale (RGPD, audit) ou une décision produit ?
-- Q2 (débloque Non-inclus — notifications membres) Un membre dont le rôle
+- Q2 (débloque Non-inclus, notifications membres) Un membre dont le rôle
   change reçoit-il une notification courriel automatique ? Si oui, c'est
   une 6e child story.
 
 Pour l'équipe support / opérations
-- Q3 (débloque Objectif — métrique de succès) Quelle réduction de tickets
+- Q3 (débloque Objectif, métrique de succès) Quelle réduction de tickets
   support attendez-vous ?
 
-Validation epic — flags surfacés
+Validation epic, flags surfacés
 - Pourquoi maintenant ?  ✅
 - Découpage              ⚠️  Voir Q2
 - Edges du périmètre     ✅
@@ -216,7 +216,7 @@ Validation epic — flags surfacés
 
 Sur réponse aux questions → Bloc B se vide → approbation explicite → `Atlassian:createJiraIssue` → clé + URL retournées.
 
-### Exemple 2 — Rédiger une user story (nouvelle feature, child de l'epic ci-dessus)
+### Exemple 2: Rédiger une user story (nouvelle feature, child de l'epic ci-dessus)
 
 **Invocation :**
 
@@ -254,7 +254,7 @@ la personne en quelques minutes plutôt qu'en quelques jours.
 
 **Scénarios**
 
-**Scénario — Invitation envoyée à une adresse valide**
+**Scénario, Invitation envoyée à une adresse valide**
 - Étant donné qu'un admin a ouvert le modal
 - Quand il saisit une adresse courriel valide, sélectionne « Membre standard »,
   et clique sur « Envoyer l'invitation »
@@ -262,7 +262,7 @@ la personne en quelques minutes plutôt qu'en quelques jours.
 - Et le système met le courriel en file d'envoi
 - Et au retour du vendeur, le modal de confirmation s'affiche (voir PROJ-1201)
 
-**Scénario — Adresse courriel invalide**
+**Scénario, Adresse courriel invalide**
 - Étant donné qu'un admin a saisi une adresse mal formée
 - Quand il clique sur « Envoyer l'invitation »
 - Alors le modal reste ouvert
@@ -270,12 +270,12 @@ la personne en quelques minutes plutôt qu'en quelques jours.
   s'affiche sous le champ courriel (verbatim, source : PO)
 - Et aucun courriel n'est mis en file d'envoi
 
-**Scénario — Échec côté vendeur d'envoi**
+**Scénario, Échec côté vendeur d'envoi**
 - Étant donné qu'un admin a cliqué sur « Envoyer l'invitation »
 - Quand le vendeur retourne une erreur
 - Alors le message « Échec de l'envoi. Veuillez réessayer. » s'affiche
 
-**Scénario — Annulation**
+**Scénario, Annulation**
 - Étant donné qu'un admin a ouvert le modal
 - Quand il clique sur « Annuler »
 - Alors le modal se ferme et aucun appel n'est fait au vendeur
@@ -296,9 +296,9 @@ la personne en quelques minutes plutôt qu'en quelques jours.
 https://www.figma.com/design/<file>/Team-Management?m=auto&node-id=<id>
 
 ## Non-inclus
-- Invitation multiple depuis CSV — voir PROJ-1300, à drafter séparément.
-- Personnalisation de la copie du courriel — hors-scope (voir PROJ-1305).
-- Suivi en temps réel de l'ouverture du courriel par l'invité — hors-scope.
+- Invitation multiple depuis CSV, voir PROJ-1300, à drafter séparément.
+- Personnalisation de la copie du courriel, hors-scope (voir PROJ-1305).
+- Suivi en temps réel de l'ouverture du courriel par l'invité, hors-scope.
 
 ## Details
 - Project: PROJ
@@ -317,7 +317,7 @@ https://www.figma.com/design/<file>/Team-Management?m=auto&node-id=<id>
 
 ```
 Pour la PO
-- Q1 (débloque Règles & contraintes — durée d'expiration)
+- Q1 (débloque Règles & contraintes, durée d'expiration)
   Le lien d'inscription est valide combien de temps ? 7 jours est-il
   configurable par l'admin ou fixe ?
 
@@ -327,18 +327,18 @@ Pour Ingénieur
   par le vendeur ? Pour chaque effet : sa nature, où il s'observe, comment
   le vérifier. Citer depuis le code ou la doc.
 
-Validation INVEST — flags surfacés
-- I — Independent     ✅  Livrable seul, bloque PROJ-1201.
-- N — Negotiable      ✅  AC décrit les outcomes, pas l'implémentation.
-- V — Valuable        ✅  Admin invite par lui-même, sans support.
-- E — Estimable       ✅  2 points (Q3 ne bloque pas, le pattern existe).
-- S — Small           ✅  Une seule capacité (invitation simple).
-- T — Testable        ✅  Quatre scénarios GWT, copie UI verbatim sourcée.
+Validation INVEST, flags surfacés
+- I, Independent     ✅  Livrable seul, bloque PROJ-1201.
+- N, Negotiable      ✅  AC décrit les outcomes, pas l'implémentation.
+- V, Valuable        ✅  Admin invite par lui-même, sans support.
+- E, Estimable       ✅  2 points (Q3 ne bloque pas, le pattern existe).
+- S, Small           ✅  Une seule capacité (invitation simple).
+- T, Testable        ✅  Quatre scénarios GWT, copie UI verbatim sourcée.
 ```
 
 Sur réponse à Q1 et Q3 → Bloc B se vide → approbation explicite → ticket créé dans Jira → clé `PROJ-1051` + URL retournées.
 
-### Exemple 3 — Auditer un ticket existant
+### Exemple 3: Auditer un ticket existant
 
 **Invocation :**
 
@@ -351,26 +351,26 @@ Sur réponse à Q1 et Q3 → Bloc B se vide → approbation explicite → ticket
 **Bloc A (extrait du rapport d'audit) :**
 
 ```markdown
-## Audit — PROJ-2368 — Système de paies
+## Audit: PROJ-2368: Système de paies
 
 Type detected: Epic
 Overall status: Needs work ⚠️
 
 ### Passes
-- ✅ A1 Summary — noun phrase action-neutre.
-- ✅ A2 Objectif — outcome observable nommé.
-- ✅ A3 Contexte — état du monde + segments affectés présents.
-- ✅ A5 Design général linked — lien Figma fourni.
-- ✅ A7 Stories enfants linked — 5 children, vertical slices.
+- ✅ A1 Summary, noun phrase action-neutre.
+- ✅ A2 Objectif, outcome observable nommé.
+- ✅ A3 Contexte, état du monde + segments affectés présents.
+- ✅ A5 Design général linked, lien Figma fourni.
+- ✅ A7 Stories enfants linked, 5 children, vertical slices.
 
 ### Flags
-- ⚠️ A4 Acceptance criteria — section sparse ; le Contexte fait figure d'AC.
+- ⚠️ A4 Acceptance criteria, section sparse ; le Contexte fait figure d'AC.
   Suggested fix: extraire 3-6 bullets observables et mesurables depuis le
   Contexte vers la section AC dédiée.
-- ⚠️ A6 Non-inclus — section absente. C'est le gap le plus commun sur les
+- ⚠️ A6 Non-inclus, section absente. C'est le gap le plus commun sur les
   epics réels. Suggested fix: lister explicitement les capacités adjacentes
   hors-scope (ex. legacy flow X reste tel quel, intégration SSO différée).
-- ⚠️ A11 Validation epic — Mesurabilité non vérifiable sans cible chiffrée.
+- ⚠️ A11 Validation epic, Mesurabilité non vérifiable sans cible chiffrée.
   Suggested fix: ajouter une métrique cible dans Objectif ou AC.
 
 ### Hard fails
@@ -388,7 +388,7 @@ Pour la PO
   pour cet epic ?
 ```
 
-Le rapport est paste-ready comme commentaire Jira. Optionnellement, le PO peut demander au skill d'appliquer les fixes — un par un, avec approbation explicite par fix, via `Atlassian:editJiraIssue`.
+Le rapport est paste-ready comme commentaire Jira. Optionnellement, le PO peut demander au skill d'appliquer les fixes, un par un, avec approbation explicite par fix, via `Atlassian:editJiraIssue`.
 
 ---
 
@@ -396,7 +396,7 @@ Le rapport est paste-ready comme commentaire Jira. Optionnellement, le PO peut d
 
 Avant de déployer un changement à l'équipe :
 
-1. Exécute la suite d'evals (`evals/evals.json`) — 13 cas couvrant les happy paths (epic, new feature, adjustment), les edge cases (type ambigu, Figma manquant, gestion de la langue, AC vague), et les concerns sécurité (injection dans les sources fetched).
+1. Exécute la suite d'evals (`evals/evals.json`), 13 cas couvrant les happy paths (epic, new feature, adjustment), les edge cases (type ambigu, Figma manquant, gestion de la langue, AC vague), et les concerns sécurité (injection dans les sources fetched).
 2. Vérifie chaque cas contre le rubric (`evals/rubric.md`).
 3. Vise au moins 11/13 cases qui passent et zéro échec sur le rubric universel.
 
