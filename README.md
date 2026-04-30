@@ -74,8 +74,11 @@ flowchart TD
 po/
 ├── .claude-plugin/
 │   └── plugin.json                       # manifest du plugin (name: po)
+├── commands/                             # slash-commands exposés par le plugin
+│   ├── jira-ticket.md                    # /po:jira-ticket — invoque le skill jira-ticket avec $ARGUMENTS
+│   └── check.md                          # /po:check — invoque le skill check avec une clé Jira ou un draft collé
 ├── skills/
-│   ├── jira-ticket/                      # /po:jira-ticket
+│   ├── jira-ticket/                      # skill invoqué par /po:jira-ticket
 │   │   ├── SKILL.md                      # entrypoint du skill
 │   │   ├── templates/
 │   │   │   ├── epic.md                   # 8 sections de Bloc A
@@ -88,7 +91,7 @@ po/
 │   │   └── references/
 │   │       ├── quality.md                # Section 1 : 16 règles. Section 2 : INVEST.
 │   │       └── mcp-handling.md           # Section 1 : appels MCP. Section 2 : sécurité.
-│   └── check/                            # /po:check
+│   └── check/                            # skill invoqué par /po:check
 │       └── SKILL.md                      # 11 checks pour epic, 10 pour story
 ├── evals/                                # tests (hors runtime du plugin)
 │   ├── README.md
@@ -96,6 +99,12 @@ po/
 │   └── rubric.md                         # critères pass/fail humains
 └── README.md                             # ce fichier
 ```
+
+### Commands vs skills
+
+- **`commands/*.md`** sont les slash-commands déclarés par le plugin. Chaque fichier a un frontmatter (`description`, `argument-hint`) et un corps qui dit à Claude *quoi faire avec `$ARGUMENTS`*. C'est la porte d'entrée utilisateur (`/po:jira-ticket ...`, `/po:check PROJ-1234`).
+- **`skills/<name>/SKILL.md`** sont les skills. C'est là que vit le contenu du skill : flow détaillé, templates, references, examples. Les commands délèguent au skill du même nom.
+- Règle : **toute logique de skill reste dans `skills/`**. Les fichiers de `commands/` doivent rester courts (frontmatter + délégation au skill + rappel des étapes clés). Si une command devient longue, déplace le contenu dans `skills/<name>/SKILL.md` ou une reference.
 
 ---
 
