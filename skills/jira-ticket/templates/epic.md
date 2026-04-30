@@ -133,7 +133,7 @@ If a child story can't be named without naming a system or a layer (e.g., "Backe
 Metadata checklist. Confirm every field with the requester before creating.
 
 - [ ] **Project**: no default, ask
-- [ ] **Issue type**: typically `Epic`; confirm based on the project's available types
+- [ ] **Issue type**: choisi au Step 2 dans la liste retournée par `Atlassian:getJiraProjectIssueTypesMetadata` (recommandation par défaut pour cet artefact : `Epic`). Verrouillé après le Step 2, plus ré-interviewé au Step 5.
 - [ ] **Parent**: theme, initiative, or roadmap item if applicable (ask, do not assume)
 - [ ] **Labels**: suggest from project scan (Step 2 of skill flow)
 - [ ] **Priority**: ask

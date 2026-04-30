@@ -88,6 +88,35 @@ Do not hardcode any of this. Every project is different.
 
 See `references/mcp-handling.md` (Section 1) for the exact MCP calls to make and how to format the results for the requester.
 
+### Step 2.5: Verrouiller l'issuetype Jira
+
+Avant de drafter, surface explicitement la liste retournée par `Atlassian:getJiraProjectIssueTypesMetadata` au requester comme **menu numéroté**, avec une recommandation marquée selon l'artefact choisi au Step 1 :
+
+| Artefact (Step 1) | Recommandation par défaut | Si la reco n'existe pas dans le projet |
+|---|---|---|
+| Epic | `Epic` | Énoncer le fait (« Ce projet n'expose pas de type "Epic" ») et demander au PO de choisir dans la liste, sans suggérer |
+| Story / new feature | `Story` (sinon `Task` en repli) | Énoncer et demander |
+| Story / adjustment | `Task` (sinon `Story` en repli) | Énoncer et demander |
+
+Format à présenter :
+
+> Voici les issue types disponibles dans le projet `<KEY>`. Lequel veux-tu pour ce ticket ?
+>
+> 1. Epic *(recommandé pour cet artefact)*
+> 2. Story
+> 3. Task
+> 4. Bug
+> 5. Design
+>
+> Réponds par le numéro.
+
+Règles :
+
+- **Le PO choisit par numéro.** Pas de saisie libre — une typo (« Stroy » au lieu de « Story ») fait échouer la création silencieusement au Step 8.
+- **Le type choisi est verrouillé** jusqu'à la création. Il n'est plus ré-interviewé au Step 5 et apparaît tel quel dans la metadata de Block A.
+- **Si l'artefact et le type choisi ne correspondent pas** (ex. artefact = epic, type choisi = `Story`), surface la dissonance avant de continuer : *« Tu drafts un epic — multi-sprint, multi-stories — mais tu choisis l'issuetype `Story`. Confirme que c'est intentionnel ; sinon repasse à `Epic`. »* Ne pas trancher pour le PO.
+- **Si la création échoue au Step 8** pour une raison liée au type (champ requis du nouveau type, type non disponible, MCP qui rejette le champ), **rouvrir ce menu** au lieu de re-fabriquer une nouvelle hypothèse.
+
 ### Step 3: Ask about sources of truth for this specific ticket
 
 Before writing anything, ask the requester what context already exists for this ticket. Present a short menu:
@@ -143,7 +172,7 @@ After drafting, identify what's still missing. Ask targeted questions only about
 
 This step has two parts: fill missing fields, **and** challenge the product shape.
 
-**Part A, Missing fields.** Ask about the ones you don't have:
+**Part A, Missing fields.** Ask about the ones you don't have. **Ne pas re-demander l'issuetype Jira** : il est verrouillé au Step 2.5. Ask about:
 
 - Parent epic
 - Labels (pre-fill suggestions from Step 2's project scan, let requester confirm/edit)
@@ -211,13 +240,31 @@ Do not proceed to Step 8 without explicit approval. "Looks good" is approval. "L
 
 ### Step 8: Create the ticket in Jira
 
-On explicit approval, use `Atlassian:createJiraIssue` with the validated payload. Then:
+On explicit approval, use `Atlassian:createJiraIssue` with the validated payload. Le payload **doit** inclure tous les champs métadonnées confirmés dans le Bloc A, pas seulement le titre et la description :
+
+- `issueTypeName` verrouillé au Step 2.5 — pas une nouvelle hypothèse, pas le défaut « Task »
+- `summary`, `description` tels qu'affichés dans Bloc A
+- `labels` : tableau des labels confirmés au Step 5 (vide si le PO a explicitement choisi de ne pas en mettre)
+- `priority`, `assignee`, `parent` (epic), `sprint`, `dueDate`, `storyPoints` : tout ce qui a été confirmé au Step 5
+
+Si un champ apparaît dans Bloc A mais n'est pas passé au MCP, c'est un bug — le ticket créé ne reflètera pas ce que le PO a validé.
+
+Then:
 
 1. Confirm the ticket was created (got a key back, no error).
 2. Return the ticket key and URL to the requester (`https://<site>.atlassian.net/browse/<KEY>`).
 3. If there were any "approved gaps" from Step 5 (things the requester explicitly chose to omit), list them at the bottom as a reminder: "FYI, we intentionally left X, Y, Z out, let me know if you want to add them."
 
-If the API call fails, show the error and ask whether to retry, edit, or hand off the draft for manual creation.
+**Si la création échoue avec une erreur liée à l'issuetype** (champ requis manquant pour ce type, type pas dans le projet, MCP qui rejette le champ) :
+
+1. Afficher l'erreur Jira **verbatim** au PO. Ne pas paraphraser.
+2. Diagnostiquer la cause probable :
+   - *« Field X is required for issuetype Y »* → ce type a un champ obligatoire que le draft ne couvre pas. Demander la valeur au PO, ajouter au payload, retenter.
+   - *« Issue type does not exist in this project »* → typo ou type retiré du projet. Rouvrir le menu du Step 2.5.
+   - Erreur MCP générique sur le champ `issueTypeName` → noter la limite du tool, demander au PO de créer manuellement avec l'issuetype voulu et coller la clé pour qu'on continue.
+3. Ne pas re-fabriquer un type au hasard pour « débloquer » la création.
+
+Pour toute autre erreur (réseau, permission), montrer l'erreur et demander whether to retry, edit, or hand off the draft for manual creation.
 
 ## Language handling
 

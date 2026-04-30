@@ -151,7 +151,7 @@ Les admins d'équipe doivent pouvoir inviter, modifier les rôles, et retirer de
 membres sans passer par le support. Couvre 2-3 sprints.
 ```
 
-**Le skill répond avec** : 5 questions de cadrage (subject confirmé, sizing, type, projet, langue), puis sur la deuxième réponse → scan du projet PROJ via Jira → demande les sources (PRD, Figma) → rédige l'epic en Bloc A + Bloc B.
+**Le skill répond avec** : 5 questions de cadrage (subject confirmé, sizing, type, projet, langue), puis sur la deuxième réponse → scan du projet PROJ via Jira → **menu numéroté des issuetypes disponibles** dans le projet avec `Epic (recommandé)` marqué (le PO confirme par numéro et le type est verrouillé) → demande les sources (PRD, Figma) → rédige l'epic en Bloc A + Bloc B.
 
 **Bloc A (extrait) :**
 
@@ -236,7 +236,7 @@ Maintenant je veux drafter la première story enfant de l'epic PROJ-1050 :
 le modal qui permet à l'admin d'inviter un nouveau membre par courriel.
 ```
 
-**Le skill répond avec** : 5 questions de cadrage → confirmation que c'est sprint-sized + new feature + parent epic = PROJ-1050 → scan du projet PROJ → demande des sources (PRD §2 sur l'invitation, Figma node-id) → rédige la story en Bloc A + Bloc B.
+**Le skill répond avec** : 5 questions de cadrage → confirmation que c'est sprint-sized + new feature + parent epic = PROJ-1050 → scan du projet PROJ → **menu numéroté des issuetypes disponibles** dans le projet avec `Story (recommandé)` ou `Task (recommandé)` selon ce que le projet expose (le PO confirme par numéro) → demande des sources (PRD §2 sur l'invitation, Figma node-id) → rédige la story en Bloc A + Bloc B.
 
 **Bloc A (extrait) :**
 

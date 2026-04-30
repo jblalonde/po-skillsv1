@@ -40,7 +40,29 @@ Find the project that matches what the requester said (by key or by name). If am
 Atlassian:getJiraProjectIssueTypesMetadata(cloudId=<cloudId>, projectKeyOrId=<KEY>)
 ```
 
-Use the returned list to confirm with the requester which issue type to use (Task is the default for both templates in our examples, but projects vary).
+**Surface la liste comme menu numéroté** au requester (cf. Step 2.5 du `SKILL.md`). Format :
+
+> Voici les issue types disponibles dans le projet `<KEY>`. Lequel veux-tu pour ce ticket ?
+>
+> 1. <Type 1> *(recommandé)* — si correspond à la reco par artefact
+> 2. <Type 2>
+> 3. ...
+
+Recommandation par défaut, selon l'artefact choisi au Step 1 du flow :
+
+- Artefact **epic** → recommander `Epic` si le projet l'expose.
+- Artefact **story / new feature** → recommander `Story` si présent, sinon `Task`.
+- Artefact **story / adjustment** → recommander `Task` si présent, sinon `Story`.
+
+Si la recommandation n'existe pas dans la liste retournée, l'énoncer explicitement au PO (« Ce projet n'expose pas de type "Epic" ») et demander de choisir dans la liste sans suggérer.
+
+Le PO répond **par numéro**, pas en saisie libre — une typo (`Stroy` au lieu de `Story`) fait échouer `createJiraIssue` au Step 8 silencieusement. Le type choisi est verrouillé pour la création ; ne plus ré-interviewer au Step 5.
+
+**Gotchas pour le Step 8** (à utiliser si la création échoue) :
+
+- Chaque issuetype peut avoir ses propres **champs requis** (Issue Type Schemes + Field Configurations). Si Jira répond *« Field X is required for issuetype Y »*, demander la valeur au PO et retenter.
+- La hiérarchie **Epic** est spéciale : Epic accepte des child stories via `Epic Link` / `Parent`. Créer un Epic dans un projet qui n'a pas le type `Epic` configuré nécessite un fallback explicite (cf. `check/SKILL.md` Step 5 pour la logique de correction post-création).
+- Le MCP Atlassian peut ne pas exposer `issueTypeName` ou un champ équivalent. Si le tool retourne une erreur de champ inconnu, noter la limite et demander au PO de créer manuellement.
 
 ### 2d. Find recent epics (for the parent field)
 
@@ -67,6 +89,8 @@ Atlassian:searchJiraIssuesUsingJql(
 ```
 
 Tally label frequency from the results. Present the top 5–8 labels (those appearing 3+ times) as suggestions. Let the requester pick from the list or add new ones.
+
+**Si le scan retourne 0 ticket avec labels, ou si aucun label n'atteint 3 occurrences** : ne rien inventer, ne pas baisser le seuil. Ajouter au Bloc B la question : *« Ce projet ne semble pas utiliser de labels (aucun trouvé sur les 50 derniers tickets, ou aucun récurrent). Veux-tu en ajouter un pour ce ticket, ou laisser vide ? »* Un ticket sans labels est un choix valide — pas un trou à combler par des suggestions inventées.
 
 ### 2f. Pull 2–3 recent similar tickets for style reference
 

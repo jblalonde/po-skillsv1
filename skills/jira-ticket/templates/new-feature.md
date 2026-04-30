@@ -174,7 +174,7 @@ Use these short subsections only when the content meaningfully helps the enginee
 Metadata checklist. Confirm every field with the requester. Defaults are suggestions, never apply without asking.
 
 - [ ] **Project**: no default, ask
-- [ ] **Issue type**: usually Task; confirm based on project's available types
+- [ ] **Issue type**: choisi au Step 2 dans la liste retournée par `Atlassian:getJiraProjectIssueTypesMetadata` (recommandation par défaut pour cet artefact : `Story` si le projet l'expose, sinon `Task`). Verrouillé après le Step 2, plus ré-interviewé au Step 5.
 - [ ] **Parent epic**: required; suggest from recent epics pulled via MCP
 - [ ] **Labels**: suggest from labels actually used in the project (see `references/mcp-handling.md` Section 1)
 - [ ] **Priority**: ask

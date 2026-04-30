@@ -67,6 +67,7 @@ For an epic, every check below runs against the ticket. Pass criteria match the 
 
 | # | Check | Pass criteria |
 |---|---|---|
+| A0 | **Issuetype matches structure** | Le ticket est filé avec `issuetype=Epic`. Mismatch ⚠️ si filé `Story` / `Task` / `Bug` alors que le ticket a 3+ child stories liées et un AC niveau-epic (3-6 outcomes mesurables, pas de GWT) — la structure dit *epic* mais le type Jira dit autre chose. Confirmer la liste des types disponibles via `Atlassian:getJiraProjectIssueTypesMetadata` avant de proposer un fix. |
 | A1 | **Summary** | Noun phrase, action-neutral. No verb (e.g. "Activer X" is a child story, not an epic summary). |
 | A2 | **Objectif** | 1–2 sentences naming the observable outcome the epic delivers. NOT a vague aspiration ("améliorer l'expérience"). |
 | A3 | **Contexte** | État du monde (what exists today) + pourquoi maintenant (driver) + affected segments. Each segment qualified: role + segment/state + context of need. No "utilisateurs". |
@@ -94,6 +95,7 @@ For a story (either type), the structural sections differ slightly between new f
 
 | # | Check | Pass criteria |
 |---|---|---|
+| B0 | **Issuetype matches structure** | Le ticket n'est PAS filé avec `issuetype=Epic`. Mismatch ⚠️ si filé `Epic` mais structuré comme une story (un seul flow, AC en GWT, aucune story enfant liée) — la structure dit *story* mais le type Jira dit *epic*. Confirmer la liste des types disponibles via `Atlassian:getJiraProjectIssueTypesMetadata` avant de proposer un fix. |
 | B1 | **Summary** | New feature: noun phrase naming the UI/capability. Adjustment: change verb (Changer, Ajouter, Retirer, Modifier, Mettre à jour). No vague summaries ("Fix X"). |
 | B2 | **Contexte** | New feature: *« En tant que [rôle qualifié, role + segment/state + context of need], je souhaite [objectif observable], afin de [bénéfice mesurable] »*. Adjustment: état du monde + ce qui change + pourquoi + segment affecté (no user-story format). NO "en tant qu'utilisateur" (Rule 1, INVEST V). |
 | B3 | **Acceptance criteria** | French canonical header: `### Critères d'acceptabilité` (not *« Critères d'acceptation »*). English: `### Acceptance criteria`. A set of pre-defined, specific, verifiable conditions. Bullets, each testable (a tester answers yes/no looking at the build). Addresses preconditions, happy path, error paths, edge cases (empty/loading), cancel/dismiss. Behavioural items in GWT (Rule 12). Verbatim UI copy from a cited source (Rule 3). No vague verbs (Rule 1: "feel responsive", "user-friendly", etc.). |
@@ -170,6 +172,30 @@ After the requester reviews the report, they can:
 - After each edit, confirm the change took effect (by re-fetching the ticket section).
 
 **Never apply fixes that the audit found as Hard Fails without explicit user approval per fix.** Those are usually Anti-fabrication violations, the skill cannot invent the missing content; the requester must provide it.
+
+### Step 5b: Fixing an issuetype mismatch (A0 / B0)
+
+A mismatch surfaced by A0 or B0 follows its own protocol because Jira treats issuetype changes specially. Do not bundle this fix with the others.
+
+1. **Récupérer la liste des types valides** dans le projet via `Atlassian:getJiraProjectIssueTypesMetadata` avant de proposer quoi que ce soit. Le skill ne suggère qu'un type qui existe réellement dans le projet.
+2. **Proposer le bon type** au PO (basé sur la structure observée) et attendre une approbation explicite. Format : *« Ce ticket est structuré comme un epic mais filé en `Story`. Le projet expose `Epic` comme type. Veux-tu que je tente le changement via `editJiraIssue` ? »*
+3. **Tenter** `Atlassian:editJiraIssue(cloudId, issueIdOrKey, fields={"issuetype": {"name": "<NewType>"}})`.
+4. **Si Jira accepte**, confirmer le changement en re-fetchant le ticket et re-rouler la checklist correspondante (epic ou story) pour valider que la nouvelle structure passe.
+5. **Si Jira refuse**, afficher l'**erreur Jira verbatim** au PO, puis diagnostiquer la cause probable et proposer une sortie contextuelle. Ne rien faire automatiquement.
+
+**Causes typiques de refus + sortie proposée :**
+
+| Erreur Jira | Cause probable | Sortie proposée |
+|---|---|---|
+| *« Field X is required for issue type Y »* | Le nouveau type a un champ obligatoire que l'ancien n'avait pas (Bug exige souvent « Steps to reproduce », « Severity »). | Lister les champs requis, demander les valeurs au PO, **retenter `editJiraIssue` avec les nouveaux champs**. |
+| *« Cannot change issue type to Epic »* / *« Cannot change issue type from Epic »* | La hiérarchie Epic est spéciale dans Jira ; `editJiraIssue` ne supporte pas la conversion. | Proposer le **« Move » manuel via Jira UI** (`...` > `Move` sur le ticket), pas exposé par le MCP. Donner le chemin précis. |
+| *« Issue type X is not available in this project »* | Le type retiré ou pas dans le scheme du projet. | Re-surfacer le menu des types valides et demander au PO de choisir. |
+| Erreur sur le champ `issuetype` lui-même (champ non-éditable, MCP qui rejette) | Limite du tool MCP `editJiraIssue`. | Proposer la **recréation** : drafter un nouveau ticket avec le bon type via `/po:jira-ticket` (le contenu actuel sert de source), créer le nouveau, lier l'ancien via `relates to`, fermer l'ancien. **Chaque action approuvée séparément**, jamais de fermeture automatique. |
+
+**Discipline d'approbation pour la recréation :**
+- Le draft du nouveau ticket suit le flow normal de `/po:jira-ticket` (Step 7 : Block A + Block B, approbation explicite avant `createJiraIssue`).
+- La fermeture de l'ancien ticket est une action **séparée** qui demande son propre « oui » du PO.
+- Jamais de `delete` ou de `close` silencieux. Si le PO préfère garder les deux ouverts (audit, lien historique), c'est son choix.
 
 ---
 
